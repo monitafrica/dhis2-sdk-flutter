@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 
 import 'credential.dart';
 
-class UserModel extends ModelProvider<User>{
+class UserModel extends ModelProvider{
   bool isAuthenticating = false;
   User currentUser;
   authenticate() async {
@@ -20,8 +20,8 @@ class UserModel extends ModelProvider<User>{
         // If the server did return a 200 OK response,
         // then parse the JSON.
         currentUser = User.fromJson(response.data);
-        await this.save(currentUser);
-        return User.fromJson(response.data);
+        await this.save<User>(currentUser);
+        return currentUser;
       } else if(response.statusCode == 404){
         // If the server did not return a 200 OK response,
         // then throw an exception.

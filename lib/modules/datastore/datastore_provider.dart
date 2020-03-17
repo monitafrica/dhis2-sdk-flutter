@@ -12,7 +12,7 @@ import 'package:reflectable/reflectable.dart';
 
 import 'datastore_model_adapter.dart';
 
-class DatastoreModel extends ModelProvider<Datastore>{
+class DatastoreModel extends ModelProvider{
 
 
   Future<dynamic> loadDataStore<T extends DatastoreAdapter>(Type dataStoreAdapterType) async {
@@ -28,7 +28,7 @@ class DatastoreModel extends ModelProvider<Datastore>{
       Response<dynamic> dataResponse = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}/$key/metaData');
       print('dataResponse');
       print(dataResponse);
-      await this.save(Datastore.fromJson(dataResponse.data));
+      await this.save<Datastore>(Datastore.fromJson(dataResponse.data));
     }
 
     //List<Response<dynamic>> responses = (await Future.wait(futures)).toList();
@@ -96,8 +96,6 @@ class DatastoreModel extends ModelProvider<Datastore>{
           }
         }
       }
-      print('resultMap:' + classMirror.simpleName);
-      print(resultMap);
       T instance = classMirror.newInstance('fromJson', [
         resultMap
       ]);

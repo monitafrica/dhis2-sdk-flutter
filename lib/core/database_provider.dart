@@ -38,7 +38,6 @@ class DatabaseHelper {
       return _db;
     }
     _db = await initDb();
-
     return _db;
   }
 

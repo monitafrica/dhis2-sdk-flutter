@@ -1,4 +1,5 @@
 
+import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:reflectable/reflectable.dart';
 
@@ -7,19 +8,25 @@ import 'http_provider.dart';
 import 'model.dart';
 
 
-abstract class ModelProvider<T> extends ChangeNotifier {
+class ModelProvider extends ChangeNotifier {
 
   DHISHttpClient client = new DHISHttpClient();
   DatabaseHelper dbClient = new DatabaseHelper();
 
 
-  initialize() async {
-    create_table(T);
+  initialize<T>() async {
+    create_table<T>();
     initializeOfflineData();
   }
 
-  Future create_table(Type type) async{
-    ClassMirror classMirror = Model.reflectType(type);
+  // ignore: non_constant_identifier_names
+  Future create_table<T>({Type type}) async{
+    ClassMirror classMirror;
+    if(type != null){
+      classMirror = Model.reflectType(type);
+    }else{
+      classMirror = Model.reflectType(T);
+    }
     List<String> columns = [];
     for(String key in classMirror.declarations.keys){
       var value = classMirror.declarations[key];
@@ -35,14 +42,15 @@ abstract class ModelProvider<T> extends ChangeNotifier {
         }else if(variableMirror.reflectedType == bool){
           columns.add('$key BOOLEAN');
         }else{
-          await create_table(variableMirror.reflectedType);
+          //variableMirror.reflectedType.
+          await create_table(type:variableMirror.reflectedType);
         }
       }
     }
     await dbClient.create_table(classMirror.simpleName.toLowerCase(),columns);
   }
 
-  Future<T> save(T model) async{
+  Future<T> save<T>(T model) async{
     ClassMirror classMirror = Model.reflectType(T);
     InstanceMirror instanceMirror = Model.reflect(model);
     Map<String, dynamic> resultMap = {};
@@ -84,11 +92,11 @@ abstract class ModelProvider<T> extends ChangeNotifier {
    *
    * Returns list of models
    */
-  Future<List<T>> getAll() async{
+  Future<List<T>> getAll<T>() async{
     ClassMirror classMirror = Model.reflectType(T);
     print(classMirror.simpleName.toLowerCase());
     return (await dbClient.getAllItems(classMirror.simpleName.toLowerCase())).map((e){
-      Map<String, dynamic> resultMap = {};
+      /*Map<String, dynamic> resultMap = {};
       for(String key in classMirror.declarations.keys){
         var value = classMirror.declarations[key];
         if(value is VariableMirror){
@@ -116,9 +124,95 @@ abstract class ModelProvider<T> extends ChangeNotifier {
       }
       T instance = classMirror.newInstance('fromJson', [
         resultMap
-      ]);
-      return instance;
+      ]);*/
+      return getObject<T>(e);
     }).toList();
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
+
+  dynamic getObjectFieldValue(Type type, object, field){
+    ClassMirror classMirror = Model.reflectType(type);
+    InstanceMirror instanceMirror = Model.reflect(object);
+    for(String key in classMirror.declarations.keys){
+      if(key == field){
+        return instanceMirror.invokeGetter(key);
+      }
+    }
+    return null;
+  }
+  Map<String, dynamic> getDBMap<T>(T object) {
+    ClassMirror classMirror = Model.reflectType(T);
+    InstanceMirror instanceMirror = Model.reflect(object);
+    Map<String, dynamic> resultMap = {};
+    for(String key in classMirror.declarations.keys){
+      var value = classMirror.declarations[key];
+      if(value is VariableMirror){
+        VariableMirror variableMirror = value;
+
+        if(variableMirror.reflectedType == String){
+          var valueToSave = instanceMirror.invokeGetter(key);
+          if(valueToSave == null){
+            resultMap[key] = null;
+          }else{
+            resultMap[key] = valueToSave;
+          }
+        }else if(variableMirror.reflectedType == bool){
+          resultMap[key] = instanceMirror.invokeGetter(key);
+        }else{
+          var otherObject = instanceMirror.invokeGetter(key);
+          variableMirror.metadata.forEach((element) {
+            if(element is ColumnMap){
+              element.map.keys.forEach((key) {
+                resultMap[element.map[key]] = getObjectFieldValue(variableMirror.reflectedType,otherObject, key);
+              });
+            }
+          });
+        }
+      }
+    }
+    return resultMap;
+  }
+
+  T getObject<T>(Map<String, dynamic>  objectMap) {
+    ClassMirror classMirror = Model.reflectType(T);
+    Map<String, dynamic> resultMap = {};
+    for(String key in classMirror.declarations.keys){
+      var value = classMirror.declarations[key];
+      if(value is VariableMirror){
+        VariableMirror variableMirror = value;
+
+        if(variableMirror.reflectedType == String){
+          var valueToSave = objectMap[key];
+          if(valueToSave == null){
+            resultMap[key] = null;
+          }else{
+            resultMap[key] = valueToSave;
+          }
+        }else if(variableMirror.reflectedType == bool){
+          if(objectMap[key] == 0){
+            resultMap[key] = false;
+          } else if(objectMap[key] == 1){
+            resultMap[key] = true;
+          } else{
+            resultMap[key] = objectMap[key];
+          }
+        }else{
+          variableMirror.metadata.forEach((element) {
+            if(element is ColumnMap){
+              Map<String,dynamic> relation = {};
+              element.map.keys.forEach((ckey) {
+                relation[ckey] = objectMap[element.map[ckey]];
+              });
+              resultMap[key] = relation;
+            }
+          });
+        }
+      }
+    }
+    return classMirror.newInstance('fromJson', [
+      resultMap
+    ]);
+  }
+
+
 }

@@ -1,6 +1,7 @@
-import 'package:dhis2sdk/core/dhis2_provider.dart';
+import 'package:dhis2sdk/modules/datastore/datastore.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_provider.dart';
 import 'package:dhis2sdk/modules/user/credential.dart';
+import 'package:dhis2sdk/modules/user/credential_provider.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
 import 'package:provider/provider.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_model_adapter.dart';
@@ -24,7 +25,7 @@ class DHIS2 {
   static Config config;
   static UserModel User;
   static bool isLogingIn = false;
-  static DHIS2Model dhis2Model;
+  static CredentialModel credentialModel;
   static DatastoreModel DataStoreModel;
 
   static List<ChangeNotifierProvider> initialize(Config config){
@@ -34,28 +35,28 @@ class DHIS2 {
     DHIS2.User = UserModel();
     changeNotifierProviders.add(ChangeNotifierProvider<UserModel>(create: (context) => DHIS2.User));
 
-    dhis2Model = DHIS2Model();
-    changeNotifierProviders.add(ChangeNotifierProvider<DHIS2Model>(create: (context) => dhis2Model));
+    credentialModel = CredentialModel();
+    changeNotifierProviders.add(ChangeNotifierProvider<CredentialModel>(create: (context) => credentialModel));
 
 
     DataStoreModel = DatastoreModel();
     changeNotifierProviders.add(ChangeNotifierProvider<DatastoreModel>(create: (context) => DHIS2.DataStoreModel));
 
-    dhis2Model.loadCredential();
+    credentialModel.loadCredential();
     return changeNotifierProviders;
   }
 
   static login(Credential credentials) async{
     DHIS2.isLogingIn = true;
     DHIS2.credentials = credentials;
-    await DHIS2.User.initialize();
+    await DHIS2.User.initialize<UserImport.User>();
 
     UserImport.User currentUser = await DHIS2.User.authenticate();
     print(currentUser);
 
-    await DataStoreModel.initialize();
+    await DataStoreModel.initialize<Datastore>();
 
-    await dhis2Model.initialize();
+    await credentialModel.initialize<Credential>();
     DHIS2.isLogingIn = false;
 
 
