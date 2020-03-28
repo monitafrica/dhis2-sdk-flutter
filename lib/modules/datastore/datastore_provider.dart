@@ -15,30 +15,31 @@ import 'datastore_model_adapter.dart';
 class DatastoreModel extends ModelProvider{
 
 
+  Future<void> initialize<T>() async {
+    for(Type type in DHIS2.config.dataStoreAdapters){
+      await super.create_table(type: type);
+    }
+  }
   Future<dynamic> loadDataStore<T extends DatastoreAdapter>(Type dataStoreAdapterType) async {
     Credential credential = DHIS2.credentials;
-    print('hey');
+    this.initialize<T>();
     ClassMirror classMirror = Model.reflectType(dataStoreAdapterType);
     DatastoreAdapter dataStoreAdapter = classMirror.newInstance("",[]);
     //this.client.get(config.url + '/api/dataStore/${dataStoreAdapter.namespace}/${dataStoreAdapter.key}/metaData').t
     Response<dynamic> response = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}');
 
-    print(response);
     for(String key in response.data){
       Response<dynamic> dataResponse = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}/$key/metaData');
-      print('dataResponse');
-      print(dataResponse);
       await this.save<Datastore>(Datastore.fromJson(dataResponse.data));
     }
 
     //List<Response<dynamic>> responses = (await Future.wait(futures)).toList();
     //await Future.wait(responses.map((response) => this.save(Datastore.fromJson(response.data))).toList());
     //response = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}/${dataStoreAdapter.key}/metaData');
-    print('Heerre');
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
-      print(response);
+
     } else if(response.statusCode == 404){
       // If the server did not return a 200 OK response,
       // then throw an exception.
@@ -51,28 +52,18 @@ class DatastoreModel extends ModelProvider{
     notifyListeners();
   }
   Future<void> initializeOfflineData() async{
-    print('What');
     List<Future<dynamic>> requests = DHIS2.config.dataStoreAdapters.map((e) => loadDataStore(e)).toList();
-    print('Waiting:');
-    //print(requests);
     List<dynamic> response = await Future.wait(requests);
-    print(response);
-    print('Done Waiting');
     notifyListeners();
   }
 
   Future<List<T>> getList<T extends DatastoreAdapter>() async{
     ClassMirror classMirror = Model.reflectType(T);
     T dataStoreInstance = classMirror.newInstance("", []);
-    print(classMirror.simpleName.toLowerCase());
     return (await dbClient.getAllItemsByColumn('datastore','namespace',dataStoreInstance.namespace)).map((object){
-      print('Here you go');
-      print(object);
       Map<String,dynamic> e = json.decode(object['value']);
       Map<String, dynamic> resultMap = {};
-      print(classMirror.declarations.keys.length);
       for(String key in classMirror.declarations.keys){
-        print('Key:' + key);
         var value = classMirror.declarations[key];
         if(value is VariableMirror){
           VariableMirror variableMirror = value;
@@ -99,7 +90,6 @@ class DatastoreModel extends ModelProvider{
       T instance = classMirror.newInstance('fromJson', [
         resultMap
       ]);
-      print('Done Mapping resultMap');
       return instance;
     }).toList();
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());

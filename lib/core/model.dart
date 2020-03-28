@@ -14,3 +14,23 @@ class ModelInterface {
     return data;
   }
 }
+
+class MapField {
+  final String field;
+  final Type type;
+  const MapField({this.field, this.type});
+}
+class ColumnMap {
+  final Map<String,MapField> map;
+  const ColumnMap({this.map});
+}
+
+class Relation {
+  final String columnId;
+  final String refferenceId;
+  const Relation({this.refferenceId, this.columnId});
+}
+class OneToOne {
+  final Relation relation;
+  const OneToOne({this.relation});
+}

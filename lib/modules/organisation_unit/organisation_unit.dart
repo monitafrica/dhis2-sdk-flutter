@@ -1,11 +1,6 @@
 
 import 'package:dhis2sdk/core/model.dart';
 
-class ColumnMap {
-  final Map<String,String> map;
-  const ColumnMap({this.map});
-}
-
 @Model
 class OrganisationUnit {
   String lastUpdated;
@@ -26,7 +21,7 @@ class OrganisationUnit {
   String openingDate;
   String dimensionItem;
 
-  @ColumnMap(map: {"id":"parent"})
+  @ColumnMap(map: {"id":MapField(field:"parent",type:String)})
   OrganisationUnit parent;
 
   OrganisationUnit(

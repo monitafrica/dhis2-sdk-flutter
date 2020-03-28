@@ -14,7 +14,10 @@ class OrganisationUnitModel extends ModelProvider{
     Credential credential = DHIS2.credentials;
     Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=*&paging=false');
     List<dynamic> orgUnitMaps = response.data['organisationUnits'];
-    await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
+    for(dynamic ouMap in orgUnitMaps){
+      await save(OrganisationUnit.fromJson(ouMap));
+    }
+    //await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
     notifyListeners();
   }
 }

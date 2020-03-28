@@ -24,6 +24,7 @@ class User implements ModelInterface{
   String nationality;
   String interests;
   bool favorite;
+  @OneToOne(relation: Relation(columnId: 'id',refferenceId: 'userid'))
   UserCredentials userCredentials;
 
   User(

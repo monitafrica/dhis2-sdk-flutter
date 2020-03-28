@@ -20,7 +20,6 @@ class CredentialModel  extends ModelProvider{
         DHIS2.User.currentUser = users.first;
       }
     }catch(e){
-      print('Error loading Credentials');
       print(e);
     } finally {
       finishedInitialize();
@@ -28,7 +27,6 @@ class CredentialModel  extends ModelProvider{
   }
   void finishedInitialize() {
     isInitializing = false;
-    print('Finished initializing Systme');
     notifyListeners();
   }
 }

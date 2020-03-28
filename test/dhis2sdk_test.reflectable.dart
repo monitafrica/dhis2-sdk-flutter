@@ -603,7 +603,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const prefix0.ModelReflectable(), -1, 6, 6, null, const []),
         r.VariableMirrorImpl(r'parent', 32773, 0,
             const prefix0.ModelReflectable(), 0, 0, 0, null, const <Object>[
-          const prefix1.ColumnMap(map: const {"id": "parent"})
+          const prefix1.ColumnMap(map: const {
+            "id": const prefix1.MapField(field: "parent", type: String)
+          })
         ]),
         r.VariableMirrorImpl(r'lastUpdated', 32773, 1,
             const prefix0.ModelReflectable(), -1, 6, 6, null, const []),
@@ -649,8 +651,16 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const prefix0.ModelReflectable(), -1, 6, 6, null, const []),
         r.VariableMirrorImpl(r'favorite', 32773, 1,
             const prefix0.ModelReflectable(), -1, 8, 8, null, const []),
-        r.VariableMirrorImpl(r'userCredentials', 32773, 1,
-            const prefix0.ModelReflectable(), 2, 2, 2, null, const []),
+        r.VariableMirrorImpl(
+            r'userCredentials',
+            32773,
+            1,
+            const prefix0.ModelReflectable(),
+            2,
+            2,
+            2,
+            null,
+            const <Object>[const prefix0.TableRelation()]),
         r.VariableMirrorImpl(r'code', 32773, 2,
             const prefix0.ModelReflectable(), -1, 6, 6, null, const []),
         r.VariableMirrorImpl(r'lastUpdated', 32773, 2,

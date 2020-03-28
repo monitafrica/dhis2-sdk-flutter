@@ -1,6 +1,8 @@
-import 'package:dhis2sdk/modules/datastore/datastore.dart';
+import 'package:dhis2sdk/modules/datastore/datastore.dart' as DatastoreImport;
 import 'package:dhis2sdk/modules/datastore/datastore_provider.dart';
-import 'package:dhis2sdk/modules/user/credential.dart';
+import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart' as OrgUnitImport;
+import 'package:dhis2sdk/modules/organisation_unit/organisationunit_model.dart';
+import 'package:dhis2sdk/modules/user/credential.dart' as CredentialImport;
 import 'package:dhis2sdk/modules/user/credential_provider.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
 import 'package:provider/provider.dart';
@@ -21,42 +23,48 @@ class MProviders{
 }
 /// A DHIS2 Instance.
 class DHIS2 {
-  static Credential credentials;
+  static CredentialImport.Credential credentials;
   static Config config;
-  static UserModel User;
+  static final UserModel User = UserModel();
   static bool isLogingIn = false;
-  static CredentialModel credentialModel;
-  static DatastoreModel DataStoreModel;
+  static final CredentialModel Credential = CredentialModel();
+  static OrganisationUnitModel OrganisationUnit = OrganisationUnitModel();
+  static DatastoreModel Datastore = DatastoreModel();
 
   static List<ChangeNotifierProvider> initialize(Config config){
     DHIS2.config = config;
     List<ChangeNotifierProvider> changeNotifierProviders = [];
 
-    DHIS2.User = UserModel();
     changeNotifierProviders.add(ChangeNotifierProvider<UserModel>(create: (context) => DHIS2.User));
 
-    credentialModel = CredentialModel();
-    changeNotifierProviders.add(ChangeNotifierProvider<CredentialModel>(create: (context) => credentialModel));
+    changeNotifierProviders.add(ChangeNotifierProvider<CredentialModel>(create: (context) => DHIS2.Credential));
 
+    changeNotifierProviders.add(ChangeNotifierProvider<DatastoreModel>(create: (context) => DHIS2.Datastore));
 
-    DataStoreModel = DatastoreModel();
-    changeNotifierProviders.add(ChangeNotifierProvider<DatastoreModel>(create: (context) => DHIS2.DataStoreModel));
+    changeNotifierProviders.add(ChangeNotifierProvider<OrganisationUnitModel>(create: (context) => DHIS2.OrganisationUnit));
 
-    credentialModel.loadCredential();
+    DHIS2.Credential.loadCredential();
+
+    DHIS2.Datastore.initialize<DatastoreImport.Datastore>().then((value){
+      DHIS2.Datastore.getAll<DatastoreImport.Datastore>().then((value){
+
+      });
+    });
     return changeNotifierProviders;
   }
 
-  static login(Credential credentials) async{
+  static login(CredentialImport.Credential credentials) async{
     DHIS2.isLogingIn = true;
     DHIS2.credentials = credentials;
     await DHIS2.User.initialize<UserImport.User>();
 
     UserImport.User currentUser = await DHIS2.User.authenticate();
-    print(currentUser);
 
-    await DataStoreModel.initialize<Datastore>();
+    await DHIS2.Datastore.initialize<DatastoreImport.Datastore>();
 
-    await credentialModel.initialize<Credential>();
+    await DHIS2.Credential.initialize<CredentialImport.Credential>();
+
+    await OrganisationUnit.initialize<OrgUnitImport.OrganisationUnit>();
     DHIS2.isLogingIn = false;
 
 

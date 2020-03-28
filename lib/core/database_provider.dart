@@ -29,8 +29,6 @@ class DatabaseHelper {
 //  DatabaseHelper._internal(this.dbName);
 
   void printdbName() {
-    print('tayari kwenye database helper');
-    print(dbName);
   }
 
   Future<Database> get db async {
@@ -78,7 +76,6 @@ class DatabaseHelper {
     String columns = columnsArray.join(', ');
     columns = columns.replaceAll("MAP", "BLOB");
     final query = "CREATE TABLE IF NOT EXISTS $name ($columns)";
-    print(query);
     var dbClient = await db;
     await dbClient.execute(query);
   }
@@ -87,7 +84,6 @@ class DatabaseHelper {
   Future<int> saveItem(String tableName, columns, values) async {
     var dbClient = await db;
     String query = "INSERT INTO $tableName(${columns.join(',')}) VALUES(${values.join(',')})";
-    print(query);
     await dbClient.execute(query);
     return 1;
   }
@@ -97,8 +93,18 @@ class DatabaseHelper {
     var dbClient = await db;
     //String query = "INSERT INTO $tableName(${columns.join(',')}) VALUES(${values.join(',')})";
     //print(query);
-    await dbClient.insert(tableName,values);
-    return 1;
+    try{
+      return await dbClient.insert(tableName,values);
+    }catch(e){
+      print(e.message);
+      if(e.message.indexOf('SQLITE_CONSTRAINT_PRIMARYKEY') > -1){
+        return await dbClient.update(tableName,values,where:"id = '${values['id']}'");
+      }else{
+        print(e.message);
+        print(e.code);
+        throw e;
+      }
+    }
   }
 
   //Get Items
@@ -221,8 +227,6 @@ class DatabaseHelper {
     var result = await dbClient
         .rawQuery("SELECT name FROM sqlite_master WHERE type='table'");
     if (result.length == 0) return null;
-    print('------ all tables here -----');
-    print(result);
     return result;
   }
 
