@@ -12,8 +12,8 @@ class ModelProvider extends ChangeNotifier {
   DatabaseHelper dbClient = new DatabaseHelper();
 
   Future<void> initialize<T>() async {
-    create_table<T>();
-    initializeOfflineData();
+    await create_table<T>();
+    await initializeOfflineData();
   }
 
   // ignore: non_constant_identifier_names
@@ -92,7 +92,7 @@ class ModelProvider extends ChangeNotifier {
     return model;
   }
 
-  void initializeOfflineData() async {
+  Future<void> initializeOfflineData() async {
 
   }
 
@@ -105,6 +105,15 @@ class ModelProvider extends ChangeNotifier {
    * Returns list of models
    */
   Future<List<T>> getAll<T>() async {
+    ClassMirror classMirror = Model.reflectType(T);
+    return (await dbClient.getAllItems(classMirror.simpleName.toLowerCase()))
+        .map((e) {
+      return getObject<T>(e);
+    }).toList();
+    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+
+  Future<List<T>> getByQuery<T>(QueryBuilder queryBuilder) async {
     ClassMirror classMirror = Model.reflectType(T);
     return (await dbClient.getAllItems(classMirror.simpleName.toLowerCase()))
         .map((e) {

@@ -4,6 +4,7 @@ import 'package:dhis2sdk/core/dhis2.dart';
 import 'package:dhis2sdk/core/http_provider.dart';
 import 'package:dhis2sdk/core/model.dart';
 import 'package:dhis2sdk/core/model_provider.dart';
+import 'package:dhis2sdk/core/query_builder.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_model_adapter.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_provider.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
@@ -54,7 +55,7 @@ void main() {
   initializeReflectable();
   test('Testing Fetching Data Store', () async {
 
-    await DHIS2.login(Credential(url:'https://dhis.facility.monitafrica.com',username: 'admin',password: 'StrongPass@2020'));
+    //await DHIS2.login(Credential(url:'https://dhis.facility.monitafrica.com',username: 'admin',password: 'StrongPass@2020'));
   });
   test('Testing Organisation Units', () {
 
@@ -92,4 +93,26 @@ void main() {
     expect(metadata['user'].indexOf('id TEXT PRIMARY KEY') > -1,true);
     print('Finishing');
   });
+
+  test('Testing Query Builder', () {
+
+    QueryBuilder queryBuilder = QueryBuilder();
+
+    queryBuilder.filter(Filter(left:"parent",operator: 'null'));
+    SelectQuery structure = queryBuilder.getQueryStructure();
+    expect(structure.where[0], 'parent is null');
+
+    queryBuilder = QueryBuilder();
+
+    queryBuilder.filter(Filter(left:"parent",operator: '=', right:'theID'));
+    structure = queryBuilder.getQueryStructure();
+    expect(structure.where[0], "parent = 'theID'");
+
+    queryBuilder.filter(Filter(left:"parent",operator: '=', right:3));
+    structure = queryBuilder.getQueryStructure();
+    expect(structure.where[0], "parent = 'theID'");
+
+  });
 }
+
+

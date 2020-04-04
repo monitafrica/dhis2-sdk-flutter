@@ -126,6 +126,25 @@ class DatabaseHelper {
   }
 
   //Get Items
+  Future<List<Map<String, dynamic>>> getItemsByFieldsAndWhere(
+      String tableName, List<String> fields, List<String> where) async {
+    var dbClient = await db;
+    String whereClause = "";
+    if(where.length > 0){
+      whereClause = "WHERE ${where.join(" AND ")}";
+    }
+
+    String selectClause = "*";
+    if(fields.length > 0){
+      selectClause = "${fields.join(", ")}";
+    }
+    var result = await dbClient
+        .rawQuery("SELECT $selectClause FROM $tableName $whereClause");
+
+    return result.toList();
+  }
+
+  //Get Items
   Future<List<Map<String, dynamic>>> getOrderdItemsByColumn(String tableName,
       String columName, dynamic value, orderBy, orderType) async {
     var dbClient = await db;
