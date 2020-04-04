@@ -23,6 +23,7 @@ class OrganisationUnit {
 
   @ColumnMap(map: {"id":MapField(field:"parent",type:String)})
   OrganisationUnit parent;
+  List<OrganisationUnit> children;
 
   OrganisationUnit(
       {this.lastUpdated,
@@ -42,7 +43,8 @@ class OrganisationUnit {
         this.externalAccess,
         this.openingDate,
         this.dimensionItem,
-        this.parent});
+        this.parent,
+        this.children});
 
   OrganisationUnit.fromJson(Map<String, dynamic> json) {
     lastUpdated = json['lastUpdated'];
