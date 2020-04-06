@@ -45,11 +45,13 @@ class DHIS2 {
 
     DHIS2.Credential.loadCredential();
 
-    DHIS2.Datastore.initialize<DatastoreImport.Datastore>().then((value){
+    //OrganisationUnit.initialize<OrgUnitImport.OrganisationUnit>();
+
+    /*DHIS2.Datastore.initialize<DatastoreImport.Datastore>().then((value){
       DHIS2.Datastore.getAll<DatastoreImport.Datastore>().then((value){
 
       });
-    });
+    });*/
     return changeNotifierProviders;
   }
 

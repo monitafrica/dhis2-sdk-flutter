@@ -115,7 +115,8 @@ class ModelProvider extends ChangeNotifier {
 
   Future<List<T>> getByQuery<T>(QueryBuilder queryBuilder) async {
     ClassMirror classMirror = Model.reflectType(T);
-    return (await dbClient.getAllItems(classMirror.simpleName.toLowerCase()))
+    SelectQuery selectQuery = queryBuilder.getQueryStructure();
+    return (await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where))
         .map((e) {
       return getObject<T>(e);
     }).toList();
@@ -214,8 +215,14 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
           if (element is ColumnMap) {
             element.map.keys.forEach((key) {
               MapField mapField = element.map[key];
-              resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = getObjectFieldValue(
-                  variableMirror.reflectedType, otherObject, key);
+              print(otherObject);
+              print(key);
+              if(otherObject == null){
+                resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = null;
+              }else{
+                resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = getObjectFieldValue(
+                    variableMirror.reflectedType, otherObject, key);
+              }
             });
           }else if (element is OneToOne) {
             Map<String, dynamic> childMap = getDBMap(otherObject,type:variableMirror.reflectedType);

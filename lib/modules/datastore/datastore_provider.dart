@@ -15,11 +15,11 @@ import 'datastore_model_adapter.dart';
 class DatastoreModel extends ModelProvider{
 
 
-  Future<void> initialize<T>() async {
+  /*Future<void> initialize<T>() async {
     for(Type type in DHIS2.config.dataStoreAdapters){
       await super.create_table(type: type);
     }
-  }
+  }*/
   Future<dynamic> loadDataStore<T extends DatastoreAdapter>(Type dataStoreAdapterType) async {
     Credential credential = DHIS2.credentials;
     this.initialize<T>();
