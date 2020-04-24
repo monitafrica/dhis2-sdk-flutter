@@ -14,15 +14,18 @@ class ModelInterface {
     return data;
   }
 }
-
+class Resource {
+  final String endpoint;
+  const Resource({this.endpoint});
+}
 class MapField {
   final String field;
   final Type type;
   const MapField({this.field, this.type});
 }
-class ColumnMap {
+class Column {
   final Map<String,MapField> map;
-  const ColumnMap({this.map});
+  const Column({this.map});
 }
 
 class Relation {

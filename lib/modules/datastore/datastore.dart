@@ -2,7 +2,7 @@
 import 'package:dhis2sdk/core/model.dart';
 
 @Model
-class Datastore implements ModelInterface{
+class DataStore implements ModelInterface{
   String created;
   String lastUpdated;
   bool externalAccess;
@@ -12,7 +12,7 @@ class Datastore implements ModelInterface{
   bool favorite;
   String id;
 
-  Datastore(
+  DataStore(
       {this.created,
         this.lastUpdated,
         this.externalAccess,
@@ -22,7 +22,7 @@ class Datastore implements ModelInterface{
         this.favorite,
         this.id});
 
-  Datastore.fromJson(Map<String, dynamic> json) {
+  DataStore.fromJson(Map<String, dynamic> json) {
     created = json['created'];
     lastUpdated = json['lastUpdated'];
     externalAccess = json['externalAccess'];

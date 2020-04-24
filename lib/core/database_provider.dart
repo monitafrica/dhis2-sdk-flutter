@@ -96,12 +96,9 @@ class DatabaseHelper {
     try{
       return await dbClient.insert(tableName,values);
     }catch(e){
-      print(e.message);
       if(e.message.indexOf('SQLITE_CONSTRAINT_PRIMARYKEY') > -1){
         return await dbClient.update(tableName,values,where:"id = '${values['id']}'");
       }else{
-        print(e.message);
-        print(e.code);
         throw e;
       }
     }

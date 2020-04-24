@@ -41,7 +41,7 @@ class DHISHttpClient {
     return dioRequests;
   }
 
-  get(url) async {
+  Future<Response<dynamic>> get(url) async {
     Dio client = await clientAuthenticationObject();
     return client.get(url);
   }

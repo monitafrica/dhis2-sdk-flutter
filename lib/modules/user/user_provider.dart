@@ -32,7 +32,6 @@ class UserModel extends ModelProvider{
         throw Exception('Failed to load User');
       }
     }catch(e){
-      print(e);
       if(e.message == 'Http status error [401]'){
         throw new Exception('NOT_AUTHENTICATED');
       } else if(e.message == 'Http status error [404]'){

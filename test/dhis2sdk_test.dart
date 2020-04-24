@@ -5,8 +5,10 @@ import 'package:dhis2sdk/core/http_provider.dart';
 import 'package:dhis2sdk/core/model.dart';
 import 'package:dhis2sdk/core/model_provider.dart';
 import 'package:dhis2sdk/core/query_builder.dart';
+import 'package:dhis2sdk/modules/datastore/datastore.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_model_adapter.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_provider.dart';
+import 'package:dhis2sdk/modules/event/event.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 import 'package:dhis2sdk/modules/user/credential.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
@@ -16,40 +18,70 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reflectable/reflectable.dart';
 
 import 'dhis2sdk_test.reflectable.dart';
-import 'package:mockito/mockito.dart';
 
+@Model
+class Questionnaire{
+  static final String namespace = 'questionnaires';
+  String id;
+  String title;
+  List<Section> sections;
+  String description;
+
+  Questionnaire.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    title = json['title'];
+    if (json['sections'] != null) {
+      sections = new List<Section>();
+      json['sections'].forEach((v) {
+        sections.add(new Section.fromJson(v));
+      });
+    }
+    description = json['description'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
+    data['title'] = this.title;
+    if (this.sections != null) {
+      data['sections'] = this.sections.map((v) => v.toJson()).toList();
+    }
+    data['description'] = this.description;
+    return data;
+  }
+}
+
+@Model
+class Section {
+  String id;
+  String title;
+  List<Section> subSections;
+
+  Section({this.id, this.title, this.subSections});
+
+  Section.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    title = json['title'];
+    if (json['subSections'] != null) {
+      subSections = new List<Section>();
+      json['subSections'].forEach((v) {
+        subSections.add(new Section.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
+    data['title'] = this.title;
+    if (this.subSections != null) {
+      data['subSections'] = this.subSections.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
 
 void main() {
-
-  /*final Dio tdio = Dio();
-  DioAdapterMock dioAdapterMock;
-  //APIHelper tapi;
-
-  setUp(() {
-    dioAdapterMock = DioAdapterMock();
-    tdio.httpClientAdapter = dioAdapterMock;
-    DHISHttpClient(dio: tdio);
-    //tapi = APIHelper.test(dio: tdio);
-  });
-  final responsepayload = jsonEncode({"response_code": "1000"});
-  final httpResponse = ResponseBody.fromString(
-    responsepayload,
-    200,
-    headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    },
-  );
-  TestWidgetsFlutterBinding.ensureInitialized();
-  initializeReflectable();
-  test('Initializing the Module', () async{
-    when(dioAdapterMock.fetch(any, any, any))
-        .thenAnswer((_) async{
-      print('Here');
-      return httpResponse;
-    });
-    final user = await DHIS2.login(Config(url:'https://play.dhis2.org/2.31.8',username:'admin',password:'district'));
-    print(user);
-  });*/
 
   //TestWidgetsFlutterBinding.ensureInitialized();
   initializeReflectable();
@@ -73,7 +105,6 @@ void main() {
     expect(metadata['organisationunit']!=null,true);
     expect(metadata['organisationunit'].indexOf('id TEXT PRIMARY KEY') > -1,true);
     expect(metadata['organisationunit'].indexOf('id TEXT') > -1,false);
-    print('Finishing');
   });
 
   test('Testing User', () {
@@ -85,15 +116,44 @@ void main() {
 
     expect(userMap['usercredentials'] != null, true);
 
+    expect(userMap['user']['organisationUnits'] != null, true);
+    expect(userMap['user']['organisationUnits'] is String, true);
+
     Map<String,List<String>> metadata = getTableColumnDefinitions<User>();
 
-    print(metadata);
     expect(metadata['user']!=null,true);
     expect(metadata['usercredentials']!=null,true);
     expect(metadata['user'].indexOf('id TEXT PRIMARY KEY') > -1,true);
-    print('Finishing');
-  });
+    expect(metadata['user'].indexOf('organisationUnits TEXT') > -1,true);
 
+    User newUser = getObject<User>(user.toJson());
+    expect(newUser.organisationUnits.length, 1);
+  });
+  test('Testing Event', () {
+
+    Event event = Event.fromJson({"href":"https://dhis.facility.monitafrica.com/api/events/b69iTUNdsTB","event":"b69iTUNdsTB","status":"COMPLETED","program":"iRAGY1xYrFk","programStage":"jJnYXM8rbGL","enrollment":"kVCoqKLulZh","enrollmentStatus":"ACTIVE","orgUnit":"VN8Jjz61jOE","orgUnitName":"Aar Health Center","trackedEntityInstance":"plrwsnAipA7","eventDate":"2020-04-03T00:00:00.000","dueDate":"2020-04-03T00:00:00.000","storedBy":"admin","dataValues":[{"created":"2020-04-03T13:46:59.467","lastUpdated":"2020-04-03T13:48:08.586","value":"Add Assistant Laboratory technologists","dataElement":"LkcOeGmoiFv","providedElsewhere":false,"storedBy":"admin"},{"created":"2020-04-03T13:47:43.547","lastUpdated":"2020-04-03T13:48:08.586","value":"High","dataElement":"YVCAlkFbc9k","providedElsewhere":false,"storedBy":"admin"},{"created":"2020-04-03T13:47:38.065","lastUpdated":"2020-04-03T13:48:08.586","value":"Limited number of allocated assistant laboratory technologists","dataElement":"EBHn9DmnjHy","providedElsewhere":false,"storedBy":"admin"}],"deleted":false,"created":"2020-04-03T13:41:25.136","lastUpdated":"2020-04-03T13:48:08.587","createdAtClient":"2020-04-03T13:41:25.136","lastUpdatedAtClient":"2020-04-03T13:48:08.587","attributeOptionCombo":"HllvX50cXC0","attributeCategoryOptions":"xYerKDKCefk","completedBy":"admin","completedDate":"2020-04-03T00:00:00.000"});
+    Map<String, Map<String, dynamic>> userMap = getDBMap<Event>(event);
+    expect(userMap['event'] != null, true);
+
+    expect(userMap['event']['dataValues'] != null, true);
+    expect(userMap['event']['dataValues'].runtimeType, String);
+    print(jsonDecode(userMap['event']['dataValues']).runtimeType);
+    expect(jsonDecode(userMap['event']['dataValues']).runtimeType, (List<dynamic>()).runtimeType);
+
+    Map<String,List<String>> metadata = getTableColumnDefinitions<Event>();
+
+    expect(metadata['event']!=null,true);
+    expect(metadata['event'].indexOf('dataValues TEXT') > -1,true);
+
+    Event newEvent = Event.fromJson(userMap['event']);
+
+    expect(newEvent.dataValues != null, true);
+  });
+  test('Testing DataStore', () {
+
+    DataStore dataStore = DataStore.fromJson({"created":"2020-04-08T02:30:57.844","lastUpdated":"2020-04-08T02:51:23.194","externalAccess":false,"publicAccess":"rw------","user":{"code":"admin","name":"admin admin","created":"2020-01-20T09:04:11.006","lastUpdated":"2020-04-08T13:14:17.176","externalAccess":false,"displayName":"admin admin","favorite":false,"id":"M5zQapPyTZI"},"lastUpdatedBy":{"id":"M5zQapPyTZI","name":"admin admin"},"namespace":"actionPoints","key":"Fl81oO5RQJN","value":"{\"id\": \"Fl81oO5RQJN\", \"name\": \"Hire more medical staff\", \"status\": \"Active\", \"healthAreaIds\": [\"tQAQAUjlL0i\"], \"questionTypeId\": \"xsHhxGIhGCb\", \"technicalAreaIds\": [\"uddmevCi0O5\"]}","favorite":false,"id":"UQwDX7c88fF"});
+
+  });
   test('Testing Query Builder', () {
 
     QueryBuilder queryBuilder = QueryBuilder();
@@ -111,6 +171,11 @@ void main() {
     queryBuilder.filter(Filter(left:"parent",operator: '=', right:3));
     structure = queryBuilder.getQueryStructure();
     expect(structure.where[0], "parent = 'theID'");
+
+  });
+  test('Test Data Store Model Reflection',(){
+    Questionnaire questionnaire = getObject<Questionnaire>({"id": "nRSAEAkfXdt", "title": "Example Questionnaire", "sections": [{"id": "ccAFCwkYU0M", "title": "Title one", "questions": [{"id": "", "code": "", "title": "Example Question", "status": "Active", "answerType": "TEXT", "generality": "Detailed", "indicators": [{"id": "tKALVlJRdGr", "name": "CYP Condoms"}, {"id": "MPBNuSP3NN0", "name": "Contraceptive Coverage - Modern Methods"}, {"id": "OVd3QGXl5dE", "name": "FP HIV Testing Rate"}, {"id": "fs1U513HkOa", "name": "FP New client rate"}], "facilityType": [], "healthAreaIds": ["EfANTEeYEAv"], "questionTypeId": "oLfTRHFEG8a", "technicalAreaIds": ["GNygmsc2e74"], "verificationMethod": ""}], "subSections": []}], "description": "MOre about example questionaire"});
+    expect(questionnaire.sections != null,true);
 
   });
 }

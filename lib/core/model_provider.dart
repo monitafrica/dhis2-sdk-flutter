@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:dhis2sdk/core/query_builder.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
+import 'package:dhis2sdk/modules/user/credential.dart';
 import 'package:flutter/foundation.dart';
 import 'package:reflectable/reflectable.dart';
+import 'package:dio/dio.dart';
 
 import 'database_provider.dart';
+import 'dhis2.dart';
 import 'http_provider.dart';
 import 'model.dart';
 
@@ -18,73 +23,50 @@ class ModelProvider extends ChangeNotifier {
 
   // ignore: non_constant_identifier_names
   Future create_table<T>({Type type}) async {
-    /*ClassMirror classMirror;
-    if (type != null) {
-      classMirror = Model.reflectType(type);
-    } else {
-      classMirror = Model.reflectType(T);
-    }
-    List<String> columns = [];
-    for (String key in classMirror.declarations.keys) {
-      var value = classMirror.declarations[key];
-      if (value is VariableMirror) {
-        VariableMirror variableMirror = value;
-
-        if (variableMirror.reflectedType == String) {
-          if (key == 'id') {
-            columns.add('$key TEXT PRIMARY KEY');
-          } else {
-            columns.add('$key TEXT');
-          }
-        } else if (variableMirror.reflectedType == bool) {
-          columns.add('$key BOOLEAN');
-        } else {
-          //variableMirror.reflectedType.
-          //await create_table(type: variableMirror.reflectedType);
-
-        }
-      }
-    }*/
-    //await dbClient.create_table(classMirror.simpleName.toLowerCase(),columns);
-
     Map<String, List<String>> tables = getTableColumnDefinitions<T>(type:type);
     await Future.wait(
         tables.keys.map((key) => dbClient.create_table(key, tables[key])));
   }
 
-  Future<T> save<T>(T model) async {
-    /*ClassMirror classMirror = Model.reflectType(T);
-    InstanceMirror instanceMirror = Model.reflect(model);
-    Map<String, dynamic> resultMap = {};
-    for (String key in classMirror.declarations.keys) {
-      var value = classMirror.declarations[key];
-      if (value is VariableMirror) {
-        VariableMirror variableMirror = value;
-
-        if (variableMirror.reflectedType == String) {
-          var valueToSave = instanceMirror.invokeGetter(key);
-          if (valueToSave == null) {
-            resultMap[key] = null;
-          } else {
-            resultMap[key] = valueToSave;
-          }
-        } else if (variableMirror.reflectedType == bool) {
-          resultMap[key] = instanceMirror.invokeGetter(key);
-        } else {
-          var otherObject = instanceMirror.invokeGetter(key);
-          if (otherObject is ModelInterface) {
-            print('Found toJson Interface');
-            await dbClient.saveItemMap(
-                variableMirror.reflectedType.toString().toLowerCase(),
-                otherObject.toJson());
-          } else {
-            print(instanceMirror.invokeGetter(key));
-            print('Found Boolean:' + key);
-          }
-        }
+  Future download<T>(QueryBuilder queryBuilder) async {
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String parameters = '';
+    if(onlineQuery.fields != null){
+      if(parameters==''){
+        parameters += '?';
       }
+      parameters += 'fields=${onlineQuery.fields}';
     }
-    await dbClient.saveItemMap(classMirror.simpleName.toLowerCase(), resultMap);*/
+    if(onlineQuery.parameters != null){
+      onlineQuery.parameters.forEach((key, value) {
+        if(parameters==''){
+          parameters += '?';
+        }else{
+          parameters += '&';
+        }
+        parameters += '$key=$value';
+      });
+    }
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
+    Response<dynamic> response = await this.client.get(url);
+    dynamic result = response.data[onlineQuery.endpoint];
+    if(onlineQuery.resultField == null){
+      result = response.data;
+    }else{
+      result = response.data[onlineQuery.resultField];
+    }
+    if(result is List){
+      for(Map<String,dynamic> resultMap in result){
+        await save(getObject<T>(resultMap));
+      }
+    }else{
+      await save(getObject<T>(result));
+    }
+    //await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
+    notifyListeners();
+  }
+  Future<T> save<T>(T model) async {
     Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
     for(String key in results.keys){
       await dbClient.saveItemMap(key, results[key]);
@@ -152,13 +134,18 @@ Map<String, List<String>> getTableColumnDefinitions<T>({Type type}) {
         columns.add('$key BOOLEAN');
       }else {
         variableMirror.metadata.forEach((element) {
-          if (element is ColumnMap) {
-            element.map.keys.forEach((ckey) {
-              MapField mapField = element.map[ckey];
-              if(mapField.type == String) {
-                columns.add('${mapField.field} TEXT');
-              }
-            });
+          if (element is Column) {
+            if(element.map != null){
+              element.map.keys.forEach((ckey) {
+                MapField mapField = element.map[ckey];
+                if(mapField.type == String) {
+                  columns.add('${mapField.field} TEXT');
+                }else{
+                }
+              });
+            }else{
+              columns.add('$key TEXT');
+            }
           } else if (element is OneToOne) {
             Map<String, List<String>> tempTables = getTableColumnDefinitions<T>(type: variableMirror.reflectedType);
             tables.addAll(tempTables);
@@ -212,18 +199,22 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
       } else {
         var otherObject = instanceMirror.invokeGetter(key);
         variableMirror.metadata.forEach((element) {
-          if (element is ColumnMap) {
-            element.map.keys.forEach((key) {
-              MapField mapField = element.map[key];
-              print(otherObject);
-              print(key);
-              if(otherObject == null){
-                resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = null;
-              }else{
-                resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = getObjectFieldValue(
-                    variableMirror.reflectedType, otherObject, key);
-              }
-            });
+          if (element is Column) {
+            if(element.map != null){
+              element.map.keys.forEach((key2) {
+                MapField mapField = element.map[key2];
+                if(otherObject == null){
+                  resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = null;
+                }else if(otherObject is List){
+                  resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = jsonEncode(otherObject.map((obj)=>obj.toJson()[key2]).toList());
+                }else{
+                  resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = getObjectFieldValue(
+                      variableMirror.reflectedType, otherObject, key2);
+                }
+              });
+            }else{
+              resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode(instanceMirror.invokeGetter(key));
+            }
           }else if (element is OneToOne) {
             Map<String, dynamic> childMap = getDBMap(otherObject,type:variableMirror.reflectedType);
             resultMap.addAll(childMap);
@@ -242,33 +233,61 @@ T getObject<T>(Map<String, dynamic> objectMap) {
     var value = classMirror.declarations[key];
     if (value is VariableMirror) {
       VariableMirror variableMirror = value;
-
-      if (variableMirror.reflectedType == String) {
-        var valueToSave = objectMap[key];
-        if (valueToSave == null) {
-          resultMap[key] = null;
-        } else {
-          resultMap[key] = valueToSave;
-        }
-      } else if (variableMirror.reflectedType == bool) {
-        if (objectMap[key] == 0) {
-          resultMap[key] = false;
-        } else if (objectMap[key] == 1) {
-          resultMap[key] = true;
-        } else {
-          resultMap[key] = objectMap[key];
-        }
-      } else {
-        variableMirror.metadata.forEach((element) {
-          if (element is ColumnMap) {
-            Map<String, dynamic> relation = {};
-            element.map.keys.forEach((ckey) {
-              MapField mapField = element.map[ckey];
-              relation[ckey] = objectMap[mapField.field];
-            });
-            resultMap[key] = relation;
+      bool isMetadata = false;
+      variableMirror.metadata.forEach((element) {
+        if (element is Column) {
+          if(variableMirror.reflectedType.toString().startsWith("List<")){
+            resultMap[key] = objectMap[key];
+          }else{
+            if(objectMap[key].runtimeType == String) {
+              Map<String, dynamic> relation = {};
+              element.map.keys.forEach((ckey) {
+                MapField mapField = element.map[ckey];
+                relation[ckey] = objectMap[mapField.field];
+              });
+              resultMap[key] = relation;
+            }else{
+              resultMap[key] = objectMap[key];
+            }
           }
-        });
+          isMetadata = true;
+        }
+      });
+      if(!isMetadata){
+        if (variableMirror.reflectedType == String) {
+          var valueToSave = objectMap[key];
+          if (valueToSave == null) {
+            resultMap[key] = null;
+          } else {
+            resultMap[key] = valueToSave;
+          }
+        } else if (variableMirror.reflectedType == bool) {
+          if (objectMap[key] == 0) {
+            resultMap[key] = false;
+          } else if (objectMap[key] == 1) {
+            resultMap[key] = true;
+          } else {
+            resultMap[key] = objectMap[key];
+          }
+        } else if (variableMirror.reflectedType.toString().startsWith('List<')) {
+          if(variableMirror.reflectedType.toString() == (List<String>()).runtimeType.toString()) {
+            resultMap[key] = objectMap[key].map((element){
+              return element.toString();
+            }).toList();
+            List<String> stringList = [];
+            objectMap[key].forEach((element){
+              stringList.add(element.toString());
+            });
+            resultMap[key] = stringList;
+            print("String:" + key + ":"+ resultMap[key].runtimeType.toString());
+          }else{
+            resultMap[key] = objectMap[key];
+          }
+
+        } else {
+          print(key + ' not used');
+          print(variableMirror.reflectedType);
+        }
       }
     }
   }

@@ -21,7 +21,7 @@ class OrganisationUnit {
   String openingDate;
   String dimensionItem;
 
-  @ColumnMap(map: {"id":MapField(field:"parent",type:String)})
+  @Column(map: {"id":MapField(field:"parent",type:String)})
   OrganisationUnit parent;
   List<OrganisationUnit> children;
 

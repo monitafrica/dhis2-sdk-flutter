@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dhis2sdk/core/dhis2.dart';
 import 'package:dhis2sdk/core/model.dart';
 import 'package:dhis2sdk/core/model_provider.dart';
+import 'package:dhis2sdk/core/query_builder.dart';
 import 'package:dhis2sdk/modules/datastore/datastore.dart';
 import 'package:dhis2sdk/modules/user/credential.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
@@ -30,7 +31,7 @@ class DatastoreModel extends ModelProvider{
 
     for(String key in response.data){
       Response<dynamic> dataResponse = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}/$key/metaData');
-      await this.save<Datastore>(Datastore.fromJson(dataResponse.data));
+      await this.save<DataStore>(DataStore.fromJson(dataResponse.data));
     }
 
     //List<Response<dynamic>> responses = (await Future.wait(futures)).toList();
@@ -52,11 +53,10 @@ class DatastoreModel extends ModelProvider{
     notifyListeners();
   }
   Future<void> initializeOfflineData() async{
-    List<Future<dynamic>> requests = DHIS2.config.dataStoreAdapters.map((e) => loadDataStore(e)).toList();
-    List<dynamic> response = await Future.wait(requests);
+    //List<Future<dynamic>> requests = DHIS2.config.dataStoreAdapters.map((e) => loadDataStore(e)).toList();
+    //List<dynamic> response = await Future.wait(requests);
     notifyListeners();
   }
-
   Future<List<T>> getList<T extends DatastoreAdapter>() async{
     ClassMirror classMirror = Model.reflectType(T);
     T dataStoreInstance = classMirror.newInstance("", []);
@@ -91,6 +91,70 @@ class DatastoreModel extends ModelProvider{
         resultMap
       ]);
       return instance;
+    }).toList();
+    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+  Future<List<T>> download<T>(QueryBuilder queryBuilder) async {
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String parameters = '';
+    if(onlineQuery.fields != null){
+      if(parameters==''){
+        parameters += '?';
+      }
+      parameters += 'fields=${onlineQuery.fields}';
+    }
+    Response<dynamic> response = await this.client.get(credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false');
+    List<Future<Response>> futures = [];
+    response.data.forEach((id){
+      //if(id=='1A2sGtDA8i')
+      {
+        futures.add(this.client.get(credential.url + '/api/${onlineQuery.endpoint}/$id/metaData'));
+      }
+    });
+
+    List<Response<dynamic>> responses = await Future.wait(futures);
+
+    List<T> results = [];
+    for(response in responses){
+      try{
+        await save<DataStore>(getObject<DataStore>(response.data));
+      }catch(e){
+        print("Error Saving Converting Class: DataStore");
+        print(response.data['value']);
+        print(e);
+      }
+      Map<String, dynamic> map = jsonDecode(response.data['value']);
+      try{
+        results.add(getObject<T>(map));
+      }catch(e){
+        ClassMirror classMirror = Model.reflectType(T);
+        print("Error Adding Converting Class:" + classMirror.simpleName);
+        map.forEach((key, value) {
+          print(key + ":"+ value.runtimeType.toString());
+        });
+        print(response.data['value']);
+        print(e);
+      }
+    }
+    return results;
+  }
+  Future<List<T>> getByFilter<T>(Filter filter) async {
+    ClassMirror classMirror = Model.reflectType(T);
+    QueryBuilder queryBuilder = QueryBuilder();
+
+    queryBuilder.filter(Filter(left:'namespace',operator: '==', right:classMirror.invokeGetter('namespace')));
+    List<DataStore> data = await super.getByQuery<DataStore>(queryBuilder);
+    return data.where((element){
+      if(filter.operator == '=='){
+        Map<String,dynamic> json = jsonDecode(element.value);
+        return json[filter.left] == filter.right;
+      }
+      return false;
+    }).map((element) {
+      print('JSON Namespace:');
+      print(jsonDecode(element.value));
+      return getObject<T>(jsonDecode(element.value));
     }).toList();
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }

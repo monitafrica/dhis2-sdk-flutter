@@ -11,15 +11,23 @@ class SelectQuery {
   List<String> where;
   SelectQuery({this.fields,this.where});
 }
+class OnlineQuery {
+  String endpoint;
+  String resultField;
+  String fields;
+  String where;
+  Map<String,dynamic> parameters ={};
+  OnlineQuery({this.fields,this.where,this.endpoint, this.resultField, this.parameters});
+}
 
 class QueryBuilder {
 
   List<String> fields = [];
   List<Filter> filters = [];
-  Map<String,dynamic> parameters ={};
+  OnlineQuery sOnlineQuery;
 
-  String getUrl(){
-
+  OnlineQuery getOnlineQuery(){
+    return sOnlineQuery;
   }
   SelectQuery getQueryStructure(){
     List<String> where = [];
@@ -33,13 +41,15 @@ class QueryBuilder {
         where.add("${element.left} ${element.operator} ${element.right}");
       }else{
 
-        print(element.right.runtimeType);
-
       }
     });
     return SelectQuery(where: where,fields: fields);
   }
 
+  QueryBuilder onlineQuery(OnlineQuery sOQ){
+    sOnlineQuery = sOQ;
+    return this;
+  }
   QueryBuilder filter(Filter sFilter){
     filters.add(sFilter);
     return this;

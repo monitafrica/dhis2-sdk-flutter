@@ -1,4 +1,5 @@
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 
 @Model
 class User implements ModelInterface{
@@ -26,6 +27,9 @@ class User implements ModelInterface{
   bool favorite;
   @OneToOne(relation: Relation(columnId: 'id',refferenceId: 'userid'))
   UserCredentials userCredentials;
+
+  @Column(map: {"id":MapField(field:"organisationUnits",type:String)})
+  List<OrganisationUnit> organisationUnits;
 
   User(
       {this.lastUpdated,
@@ -78,6 +82,12 @@ class User implements ModelInterface{
     userCredentials = json['userCredentials'] != null
         ? new UserCredentials.fromJson(json['userCredentials'])
         : null;
+    if (json['organisationUnits'] != null) {
+      organisationUnits = new List<OrganisationUnit>();
+      json['organisationUnits'].forEach((v) {
+        organisationUnits.add(new OrganisationUnit.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -106,6 +116,10 @@ class User implements ModelInterface{
     data['favorite'] = this.favorite;
     if (this.userCredentials != null) {
       data['userCredentials'] = this.userCredentials.toJson();
+    }
+    if (this.organisationUnits != null) {
+      data['organisationUnits'] =
+          this.organisationUnits.map((v) => v.toJson()).toList();
     }
     return data;
   }

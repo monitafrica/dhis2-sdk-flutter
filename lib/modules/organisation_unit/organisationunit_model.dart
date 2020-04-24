@@ -13,18 +13,13 @@ class OrganisationUnitModel extends ModelProvider{
 
   Future<void> initializeOfflineData() async{
     Credential credential = DHIS2.credentials;
-    print('Downloading Organisation Units');
     Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=lastUpdated,id,href,level,created,name,shortName,code,leaf,path,favorite,dimensionItemType,displayName,displayShortName,externalAccess,openingDate,dimensionItem,path&paging=false');
-    print('Got it');
     List<dynamic> orgUnitMaps = response.data['organisationUnits'];
     for(dynamic ouMap in orgUnitMaps){
-      print('Saving');
       await save(OrganisationUnit.fromJson(ouMap));
       try{
 
       }catch(e){
-        print('SAVING ORG UNIT :: ');
-        print(ouMap);
         print(e);
       }
     }
