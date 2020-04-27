@@ -1,4 +1,5 @@
 import 'package:dhis2sdk/modules/datastore/datastore.dart' as DatastoreImport;
+import 'package:dhis2sdk/modules/datastore/datastore_adapter_provider.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_provider.dart';
 import 'package:dhis2sdk/modules/event/event_model.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart' as OrgUnitImport;
@@ -31,7 +32,8 @@ class DHIS2 {
   static bool isLogingIn = false;
   static final CredentialModel Credential = CredentialModel();
   static OrganisationUnitModel OrganisationUnit = OrganisationUnitModel();
-  static DatastoreModel Datastore = DatastoreModel();
+  static DatastoreModel Datastore= DatastoreModel();
+  static DatastoreAdapterModel DatastoreAdapter = DatastoreAdapterModel();
   static EventModel Event = EventModel();
 
   static List<ChangeNotifierProvider> initialize(Config config){
@@ -43,6 +45,8 @@ class DHIS2 {
     changeNotifierProviders.add(ChangeNotifierProvider<CredentialModel>(create: (context) => DHIS2.Credential));
 
     changeNotifierProviders.add(ChangeNotifierProvider<DatastoreModel>(create: (context) => DHIS2.Datastore));
+
+    changeNotifierProviders.add(ChangeNotifierProvider<DatastoreAdapterModel>(create: (context) => DHIS2.DatastoreAdapter));
 
     changeNotifierProviders.add(ChangeNotifierProvider<OrganisationUnitModel>(create: (context) => DHIS2.OrganisationUnit));
 

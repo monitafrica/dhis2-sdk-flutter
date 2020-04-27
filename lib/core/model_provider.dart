@@ -279,7 +279,6 @@ T getObject<T>(Map<String, dynamic> objectMap) {
               stringList.add(element.toString());
             });
             resultMap[key] = stringList;
-            print("String:" + key + ":"+ resultMap[key].runtimeType.toString());
           }else{
             resultMap[key] = objectMap[key];
           }
