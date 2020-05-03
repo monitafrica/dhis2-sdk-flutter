@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dhis2sdk/core/model.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 
@@ -13,7 +15,6 @@ class User implements ModelInterface{
   String gender;
   String displayName;
   String jobTitle;
-  bool externalAccess;
   String surname;
   String employer;
   String introduction;
@@ -24,11 +25,10 @@ class User implements ModelInterface{
   String phoneNumber;
   String nationality;
   String interests;
-  bool favorite;
-  @OneToOne(relation: Relation(columnId: 'id',refferenceId: 'userid'))
+  @Column()
   UserCredentials userCredentials;
 
-  @Column(map: {"id":MapField(field:"organisationUnits",type:String)})
+  @Column()
   List<OrganisationUnit> organisationUnits;
 
   User(
@@ -42,7 +42,6 @@ class User implements ModelInterface{
         this.gender,
         this.displayName,
         this.jobTitle,
-        this.externalAccess,
         this.surname,
         this.employer,
         this.introduction,
@@ -53,7 +52,6 @@ class User implements ModelInterface{
         this.phoneNumber,
         this.nationality,
         this.interests,
-        this.favorite,
         this.userCredentials});
 
   User.fromJson(Map<String, dynamic> json) {
@@ -67,7 +65,6 @@ class User implements ModelInterface{
     gender = json['gender'];
     displayName = json['displayName'];
     jobTitle = json['jobTitle'];
-    externalAccess = json['externalAccess'];
     surname = json['surname'];
     employer = json['employer'];
     introduction = json['introduction'];
@@ -78,7 +75,9 @@ class User implements ModelInterface{
     phoneNumber = json['phoneNumber'];
     nationality = json['nationality'];
     interests = json['interests'];
-    favorite = json['favorite'];
+    if(json['userCredentials'].runtimeType == String){
+      json['userCredentials'] = jsonDecode(json['userCredentials']);
+    }
     userCredentials = json['userCredentials'] != null
         ? new UserCredentials.fromJson(json['userCredentials'])
         : null;
@@ -102,7 +101,6 @@ class User implements ModelInterface{
     data['gender'] = this.gender;
     data['displayName'] = this.displayName;
     data['jobTitle'] = this.jobTitle;
-    data['externalAccess'] = this.externalAccess;
     data['surname'] = this.surname;
     data['employer'] = this.employer;
     data['introduction'] = this.introduction;
@@ -113,7 +111,6 @@ class User implements ModelInterface{
     data['phoneNumber'] = this.phoneNumber;
     data['nationality'] = this.nationality;
     data['interests'] = this.interests;
-    data['favorite'] = this.favorite;
     if (this.userCredentials != null) {
       data['userCredentials'] = this.userCredentials.toJson();
     }

@@ -19,8 +19,9 @@ class CredentialModel  extends ModelProvider{
         List<User> users = await DHIS2.User.getAll<User>();
         DHIS2.User.currentUser = users.first;
       }
-    }catch(e){
+    }catch(e, s){
       print(e);
+      print(s);
     } finally {
       finishedInitialize();
     }

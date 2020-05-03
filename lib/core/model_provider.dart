@@ -135,19 +135,9 @@ Map<String, List<String>> getTableColumnDefinitions<T>({Type type}) {
       }else {
         variableMirror.metadata.forEach((element) {
           if (element is Column) {
-            if(element.map != null){
-              element.map.keys.forEach((ckey) {
-                MapField mapField = element.map[ckey];
-                if(mapField.type == String) {
-                  columns.add('${mapField.field} TEXT');
-                }else{
-                }
-              });
-            }else{
-              columns.add('$key TEXT');
-            }
+            columns.add('$key TEXT');
           } else if (element is OneToOne) {
-            Map<String, List<String>> tempTables = getTableColumnDefinitions<T>(type: variableMirror.reflectedType);
+            Map<String, List<String>> tempTables = getTableColumnDefinitions(type: variableMirror.reflectedType);
             tables.addAll(tempTables);
           } else {
 
@@ -196,24 +186,21 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
         }
       } else if (variableMirror.reflectedType == bool) {
         resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
+      } else if (variableMirror.reflectedType == int) {
+        resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
       } else {
         var otherObject = instanceMirror.invokeGetter(key);
         variableMirror.metadata.forEach((element) {
           if (element is Column) {
-            if(element.map != null){
-              element.map.keys.forEach((key2) {
-                MapField mapField = element.map[key2];
-                if(otherObject == null){
-                  resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = null;
-                }else if(otherObject is List){
-                  resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = jsonEncode(otherObject.map((obj)=>obj.toJson()[key2]).toList());
-                }else{
-                  resultMap[classMirror.simpleName.toLowerCase()][mapField.field] = getObjectFieldValue(
-                      variableMirror.reflectedType, otherObject, key2);
-                }
-              });
+            if(instanceMirror.invokeGetter(key).runtimeType.toString().startsWith("List<")){
+              resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode((instanceMirror.invokeGetter(key) as List).map((object){
+                return getDBMap(object,type: object.runtimeType)[object.runtimeType.toString().toLowerCase()];
+              }).toList());
             }else{
-              resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode(instanceMirror.invokeGetter(key));
+              if(instanceMirror.invokeGetter(key) != null){
+                Map<String,dynamic> dependeny = getDBMap(instanceMirror.invokeGetter(key),type: instanceMirror.invokeGetter(key).runtimeType);
+                resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode(Map<String, dynamic>.from(dependeny[instanceMirror.invokeGetter(key).runtimeType.toString().toLowerCase()]));
+              }
             }
           }else if (element is OneToOne) {
             Map<String, dynamic> childMap = getDBMap(otherObject,type:variableMirror.reflectedType);
@@ -237,23 +224,31 @@ T getObject<T>(Map<String, dynamic> objectMap) {
       variableMirror.metadata.forEach((element) {
         if (element is Column) {
           if(variableMirror.reflectedType.toString().startsWith("List<")){
-            resultMap[key] = objectMap[key];
-          }else{
-            if(objectMap[key].runtimeType == String) {
-              Map<String, dynamic> relation = {};
-              element.map.keys.forEach((ckey) {
-                MapField mapField = element.map[ckey];
-                relation[ckey] = objectMap[mapField.field];
-              });
-              resultMap[key] = relation;
+            if(objectMap[key].runtimeType == String){
+              resultMap[key] = jsonDecode(objectMap[key]);
             }else{
               resultMap[key] = objectMap[key];
+            }
+          }else{
+            if(variableMirror.reflectedType == String) {
+              resultMap[key] = objectMap[key];
+            }else{
+              if(objectMap[key].runtimeType == String){
+                try{
+                  resultMap[key] = jsonDecode(objectMap[key]);
+                }catch(e){
+                  resultMap[key] = objectMap[key];
+                }
+
+              }else{
+                resultMap[key] = objectMap[key];
+              }
             }
           }
           isMetadata = true;
         }
       });
-      if(!isMetadata){
+      if(!isMetadata && objectMap[key] != null){
         if (variableMirror.reflectedType == String) {
           var valueToSave = objectMap[key];
           if (valueToSave == null) {
@@ -269,6 +264,8 @@ T getObject<T>(Map<String, dynamic> objectMap) {
           } else {
             resultMap[key] = objectMap[key];
           }
+        } else if (variableMirror.reflectedType == int) {
+          resultMap[key] = objectMap[key];
         } else if (variableMirror.reflectedType.toString().startsWith('List<')) {
           if(variableMirror.reflectedType.toString() == (List<String>()).runtimeType.toString()) {
             resultMap[key] = objectMap[key].map((element){
@@ -284,8 +281,8 @@ T getObject<T>(Map<String, dynamic> objectMap) {
           }
 
         } else {
-          print(key + ' not used');
-          print(variableMirror.reflectedType);
+          //print(key + ' not used');
+          //print(variableMirror.reflectedType);
         }
       }
     }

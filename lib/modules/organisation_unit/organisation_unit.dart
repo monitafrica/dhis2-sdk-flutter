@@ -21,7 +21,7 @@ class OrganisationUnit {
   String openingDate;
   String dimensionItem;
 
-  @Column(map: {"id":MapField(field:"parent",type:String)})
+  @Column()
   OrganisationUnit parent;
   List<OrganisationUnit> children;
 
@@ -64,6 +64,11 @@ class OrganisationUnit {
     externalAccess = json['externalAccess'];
     openingDate = json['openingDate'];
     dimensionItem = json['dimensionItem'];
+    if(json['parent'].runtimeType == String){
+      json['parent'] = {
+        "id":json['parent']
+      };
+    }
     parent =
     json['parent'] != null ? new OrganisationUnit.fromJson(json['parent']) : null;
   }

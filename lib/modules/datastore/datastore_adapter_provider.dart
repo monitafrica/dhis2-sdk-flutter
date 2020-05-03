@@ -88,7 +88,7 @@ class DatastoreAdapterModel extends ModelProvider{
     }).toList();
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
-  Future<List<T>> download<T>(QueryBuilder queryBuilder) async {
+  Future download<T>(QueryBuilder queryBuilder) async {
     Credential credential = DHIS2.credentials;
     OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
     String parameters = '';
@@ -98,55 +98,37 @@ class DatastoreAdapterModel extends ModelProvider{
       }
       parameters += 'fields=${onlineQuery.fields}';
     }
-    print('Here');
     Response<dynamic> response = await this.client.get(credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false');
     List<Future<Response>> futures = [];
-    print('Here1');
     response.data.forEach((id){
       futures.add(this.client.get(credential.url + '/api/${onlineQuery.endpoint}/$id/metaData'));
     });
-    print('Here2');
     List<Response<dynamic>> responses = await Future.wait(futures);
 
-    List<T> results = [];
-    print('Here3:' + responses.length.toString());
     for(response in responses){
       try{
         await save<DataStore>(getObject<DataStore>(response.data));
-      }catch(e){
+      }catch(e, s){
         print(e);
-      }
-      Map<String, dynamic> map = jsonDecode(response.data['value']);
-      try{
-        results.add(getObject<T>(map));
-      }catch(e){
-        /*ClassMirror classMirror = Model.reflectType(T);
-        print("Error Adding Converting Class:" + classMirror.simpleName);
-        map.forEach((key, value) {
-          print(key + ":"+ value.runtimeType.toString());
-        });
-        print(e);*/
+        print(s);
       }
     }
-    return results;
   }
   Future<List<T>> getByFilter<T>(Filter filter) async {
 
     ClassMirror classMirror = Model.reflectType(T);
-    print('Loading:' + classMirror.simpleName);
 
     QueryBuilder queryBuilder = QueryBuilder();
-    print('Here1:' + classMirror.invokeGetter('namespace'));
     queryBuilder.filter(Filter(left:'namespace',operator: '==', right:classMirror.invokeGetter('namespace')));
-    print('Here2');
     List<DataStore> data = await super.getByQuery<DataStore>(queryBuilder);
-    print('Here3');
-    print(data);
     return data.where((element){
       if(filter.operator == '=='){
-        print('Here4');
         Map<String,dynamic> json = jsonDecode(element.value);
         return json[filter.left] == filter.right;
+      }
+      if(filter.operator == 'in'){
+        Map<String,dynamic> json = jsonDecode(element.value);
+        return List<String>.from(filter.right).contains(json[filter.left]);
       }
       return false;
     }).map((element) {
@@ -157,15 +139,14 @@ class DatastoreAdapterModel extends ModelProvider{
   Future<List<T>> getAll<T>() async{
     ClassMirror classMirror = Model.reflectType(T);
     QueryBuilder queryBuilder = QueryBuilder();
-
     queryBuilder.filter(Filter(left:'namespace',operator: '==', right:classMirror.invokeGetter('namespace')));
     List<DataStore> data = await super.getByQuery<DataStore>(queryBuilder);
     List<T> results = [];
     data.forEach((element) {
       try{
         results.add(getObject<T>(jsonDecode(element.value)));
-      }catch(e){
-
+      }catch(e, s){
+        print(s);
       }
     });
     return results;

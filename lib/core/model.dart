@@ -24,8 +24,7 @@ class MapField {
   const MapField({this.field, this.type});
 }
 class Column {
-  final Map<String,MapField> map;
-  const Column({this.map});
+  const Column();
 }
 
 class Relation {

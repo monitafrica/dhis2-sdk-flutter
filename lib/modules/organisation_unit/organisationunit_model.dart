@@ -12,17 +12,26 @@ class OrganisationUnitModel extends ModelProvider{
 
 
   Future<void> initializeOfflineData() async{
-    Credential credential = DHIS2.credentials;
-    Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=lastUpdated,id,href,level,created,name,shortName,code,leaf,path,favorite,dimensionItemType,displayName,displayShortName,externalAccess,openingDate,dimensionItem,path&paging=false');
-    List<dynamic> orgUnitMaps = response.data['organisationUnits'];
-    for(dynamic ouMap in orgUnitMaps){
-      await save(OrganisationUnit.fromJson(ouMap));
-      try{
 
-      }catch(e){
-        print(e);
+  }
+
+  Future downloadAll() async{
+    Credential credential = DHIS2.credentials;
+    print('Started Downloading Organisation Units');
+    Map<String,dynamic> pager = {
+      'page': 0
+    };
+    do{
+      pager['page']++;
+      Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=lastUpdated,id,href,level,name,shortName,code,path,displayName,openingDate,path,parent&pageSize=500&page=${pager['page']}');
+      List<dynamic> orgUnitMaps = response.data['organisationUnits'];
+      pager = response.data['pager'];
+      print(pager);
+      for(dynamic ouMap in orgUnitMaps){
+        await save(OrganisationUnit.fromJson(ouMap));
       }
-    }
+    }while(pager['page'] != pager['pageCount']);
+    print('Done Downloading Organisation Units');
     //await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
     notifyListeners();
   }
@@ -41,8 +50,25 @@ class OrganisationUnitModel extends ModelProvider{
   }
   Future<List<OrganisationUnit>> getChildren(String parentId) async {
     QueryBuilder queryBuilder = QueryBuilder();
-    queryBuilder.filter(Filter(left:"parent",operator: '=', right: parentId));
+    queryBuilder.filter(Filter(left:"parent",operator: 'like', right: '%' + parentId + '%'));
     return await getByQuery<OrganisationUnit>(queryBuilder);
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+
+  Future<OrganisationUnit> getById(String id) async {
+    QueryBuilder queryBuilder = QueryBuilder();
+    queryBuilder.filter(Filter(left:"id",operator: '==', right: id));
+    List<OrganisationUnit> ous = await getByQuery<OrganisationUnit>(queryBuilder);
+    if(ous.length > 0){
+      return ous[0];
+    }
+    return null;
+    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+  Future<List<OrganisationUnit>> getAncestors(String id) async {
+    OrganisationUnit organisationUnit = await getById(id);
+    QueryBuilder queryBuilder = QueryBuilder();
+    queryBuilder.filter(Filter(left:"id",operator: 'in', right: organisationUnit.path.split('/')));
+    return await getByQuery<OrganisationUnit>(queryBuilder);
   }
 }

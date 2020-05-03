@@ -18,7 +18,7 @@ class Event {
   String dueDate;
   String storedBy;
   @Column()
-  List<DataValues> dataValues;
+  List<DataValue> dataValues;
   bool deleted;
   String created;
   String lastUpdated;
@@ -72,9 +72,9 @@ class Event {
       if(json['dataValues'].runtimeType == String){
         json['dataValues'] = jsonDecode(json['dataValues']);
       }
-      dataValues = new List<DataValues>();
+      dataValues = new List<DataValue>();
       json['dataValues'].forEach((v) {
-        dataValues.add(new DataValues.fromJson(v));
+        dataValues.add(new DataValue.fromJson(v));
       });
     }
     deleted = json['deleted'];
@@ -119,7 +119,8 @@ class Event {
   }
 }
 
-class DataValues {
+@Model
+class DataValue {
   String created;
   String lastUpdated;
   String value;
@@ -127,7 +128,7 @@ class DataValues {
   bool providedElsewhere;
   String storedBy;
 
-  DataValues(
+  DataValue(
       {this.created,
         this.lastUpdated,
         this.value,
@@ -135,7 +136,7 @@ class DataValues {
         this.providedElsewhere,
         this.storedBy});
 
-  DataValues.fromJson(Map<String, dynamic> json) {
+  DataValue.fromJson(Map<String, dynamic> json) {
     created = json['created'];
     lastUpdated = json['lastUpdated'];
     value = json['value'];

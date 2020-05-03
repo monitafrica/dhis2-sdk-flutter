@@ -31,12 +31,13 @@ class UserModel extends ModelProvider{
         // then throw an exception.
         throw Exception('Failed to load User');
       }
-    }catch(e){
+    }catch(e,s){
       if(e.message == 'Http status error [401]'){
         throw new Exception('NOT_AUTHENTICATED');
       } else if(e.message == 'Http status error [404]'){
         throw new Exception('The URL ${credentials.url} was not found. Details:${e.message}');
       } else {
+        print(s);
         throw new Exception(e.message);
       }
     }finally{

@@ -42,6 +42,7 @@ class DatabaseHelper {
   initDb() async {
     //Get application directory
     Directory documentDirectory = await getApplicationDocumentsDirectory();
+    print('Database Path:' + documentDirectory.path);
     //prepare a database path
     String path = join(documentDirectory.path, dbName + '.db');
     //open the database
@@ -99,6 +100,7 @@ class DatabaseHelper {
       if(e.message.indexOf('SQLITE_CONSTRAINT_PRIMARYKEY') > -1){
         return await dbClient.update(tableName,values,where:"id = '${values['id']}'");
       }else{
+        print(e);
         throw e;
       }
     }

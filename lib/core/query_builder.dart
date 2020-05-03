@@ -35,7 +35,9 @@ class QueryBuilder {
     filters.forEach((element) {
       if(element.operator=='null'){
         where.add(element.left + ' is null');
-      }else if(element.right.runtimeType == String){
+      } else if(element.operator=='in'){
+        where.add("${element.left} ${element.operator} ('${element.right.join("','")}')");
+      } else if(element.right.runtimeType == String){
         where.add("${element.left} ${element.operator} '${element.right}'");
       }else if(element.right.runtimeType == int){
         where.add("${element.left} ${element.operator} ${element.right}");
@@ -43,6 +45,7 @@ class QueryBuilder {
 
       }
     });
+    print(where);
     return SelectQuery(where: where,fields: fields);
   }
 
