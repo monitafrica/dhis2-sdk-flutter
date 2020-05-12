@@ -266,7 +266,10 @@ T getObject<T>(Map<String, dynamic> objectMap) {
           }
         } else if (variableMirror.reflectedType == int) {
           resultMap[key] = objectMap[key];
-        } else if (variableMirror.reflectedType.toString().startsWith('List<')) {
+        } else if (variableMirror.reflectedType.toString().startsWith('Map<String')) {
+          resultMap[key] = objectMap[key];
+
+        }else if (variableMirror.reflectedType.toString().startsWith('List<')) {
           if(variableMirror.reflectedType.toString() == (List<String>()).runtimeType.toString()) {
             resultMap[key] = objectMap[key].map((element){
               return element.toString();

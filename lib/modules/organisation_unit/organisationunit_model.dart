@@ -23,7 +23,7 @@ class OrganisationUnitModel extends ModelProvider{
     };
     do{
       pager['page']++;
-      Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=lastUpdated,id,href,level,name,shortName,code,path,displayName,openingDate,path,parent&pageSize=500&page=${pager['page']}');
+      Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=lastUpdated,id,href,level,name,shortName,code,path,displayName,openingDate,path,parent&pageSize=1000&page=${pager['page']}');
       List<dynamic> orgUnitMaps = response.data['organisationUnits'];
       pager = response.data['pager'];
       print(pager);
