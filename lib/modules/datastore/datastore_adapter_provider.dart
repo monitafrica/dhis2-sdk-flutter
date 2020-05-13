@@ -144,10 +144,6 @@ class DatastoreAdapterModel extends ModelProvider{
     List<T> results = [];
     data.forEach((element) {
       try{
-        if(element.key == 'FORM0000000'){
-          Map json = jsonDecode(element.value);
-          print(json['referenceNumbers']);
-        }
         results.add(getObject<T>(jsonDecode(element.value)));
       }catch(e, s){
         print(s);

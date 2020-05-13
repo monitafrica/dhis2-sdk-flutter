@@ -42,7 +42,6 @@ class DatabaseHelper {
   initDb() async {
     //Get application directory
     Directory documentDirectory = await getApplicationDocumentsDirectory();
-    print('Database Path:' + documentDirectory.path);
     //prepare a database path
     String path = join(documentDirectory.path, dbName + '.db');
     //open the database

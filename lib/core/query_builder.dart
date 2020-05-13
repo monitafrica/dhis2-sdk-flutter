@@ -45,7 +45,6 @@ class QueryBuilder {
 
       }
     });
-    print(where);
     return SelectQuery(where: where,fields: fields);
   }
 

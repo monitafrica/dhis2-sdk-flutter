@@ -17,7 +17,6 @@ class OrganisationUnitModel extends ModelProvider{
 
   Future downloadAll() async{
     Credential credential = DHIS2.credentials;
-    print('Started Downloading Organisation Units');
     Map<String,dynamic> pager = {
       'page': 0
     };
@@ -26,13 +25,10 @@ class OrganisationUnitModel extends ModelProvider{
       Response<dynamic> response = await this.client.get(credential.url + '/api/organisationUnits.json?fields=lastUpdated,id,href,level,name,shortName,code,path,displayName,openingDate,path,parent&pageSize=1000&page=${pager['page']}');
       List<dynamic> orgUnitMaps = response.data['organisationUnits'];
       pager = response.data['pager'];
-      print(pager);
       for(dynamic ouMap in orgUnitMaps){
         await save(OrganisationUnit.fromJson(ouMap));
       }
     }while(pager['page'] != pager['pageCount']);
-    print('Done Downloading Organisation Units');
-    //await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
     notifyListeners();
   }
   Future<List<OrganisationUnit>> getRoots<T>() async {
