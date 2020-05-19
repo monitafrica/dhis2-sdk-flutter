@@ -4,6 +4,7 @@ import 'package:dhis2sdk/modules/datastore/datastore_provider.dart';
 import 'package:dhis2sdk/modules/event/event_model.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart' as OrgUnitImport;
 import 'package:dhis2sdk/modules/organisation_unit/organisationunit_model.dart';
+import 'package:dhis2sdk/modules/tracker/tracker_model.dart';
 import 'package:dhis2sdk/modules/user/credential.dart' as CredentialImport;
 import 'package:dhis2sdk/modules/user/credential_provider.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
@@ -11,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:dhis2sdk/modules/datastore/datastore_model_adapter.dart';
 import 'package:dhis2sdk/modules/user/user.dart' as UserImport;
 import 'package:dhis2sdk/modules/event/event.dart' as EventImport;
+import 'package:dhis2sdk/modules/tracker/tracked_entity_instance.dart' as TrackerImport;
 import 'package:dhis2sdk/modules/user/user_provider.dart';
 
 class Config{
@@ -35,6 +37,7 @@ class DHIS2 {
   static DatastoreModel Datastore= DatastoreModel();
   static DatastoreAdapterModel DatastoreAdapter = DatastoreAdapterModel();
   static EventModel Event = EventModel();
+  static TrackerModel Tracker = TrackerModel();
 
   static List<ChangeNotifierProvider> initialize(Config config){
     DHIS2.config = config;
@@ -51,6 +54,8 @@ class DHIS2 {
     changeNotifierProviders.add(ChangeNotifierProvider<OrganisationUnitModel>(create: (context) => DHIS2.OrganisationUnit));
 
     changeNotifierProviders.add(ChangeNotifierProvider<EventModel>(create: (context) => DHIS2.Event));
+
+    changeNotifierProviders.add(ChangeNotifierProvider<TrackerModel>(create: (context) => DHIS2.Tracker));
 
     DHIS2.Credential.loadCredential();
 
@@ -78,6 +83,8 @@ class DHIS2 {
     await DHIS2.OrganisationUnit.initialize<OrgUnitImport.OrganisationUnit>();
 
     await DHIS2.Event.initialize<EventImport.Event>();
+
+    await DHIS2.Tracker.initialize<TrackerImport.TrackedEntityInstance>();
     DHIS2.isLogingIn = false;
 
 

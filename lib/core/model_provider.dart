@@ -74,6 +74,18 @@ class ModelProvider extends ChangeNotifier {
     return model;
   }
 
+  Future<T> update<T>(T model,String criteria) async {
+    Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
+    for(String key in results.keys){
+      await dbClient.updateItemMap(key, criteria, results[key]);
+    }
+    return model;
+  }
+  Future deleteAll<T>() async {
+    ClassMirror classMirror = Model.reflectType(T);
+    return await dbClient.deleteAll(classMirror.simpleName);
+  }
+
   Future<void> initializeOfflineData() async {
 
   }

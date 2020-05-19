@@ -105,6 +105,11 @@ class DatabaseHelper {
     }
   }
 
+  Future<int> updateItemMap(String tableName, criteria,values) async {
+    var dbClient = await db;
+    return await dbClient.update(tableName,values,where:criteria);
+  }
+
   //Get Items
   Future<List<Map<String, dynamic>>> getAllItems(String tableName) async {
     var dbClient = await db;
@@ -220,6 +225,13 @@ class DatabaseHelper {
 
     return await dbClient
         .delete(tableName, where: "$column = ?", whereArgs: [value]);
+  }
+
+  Future<int> deleteAll(String tableName) async {
+    var dbClient = await db;
+
+    return await dbClient
+        .delete(tableName);
   }
 
   // update Item in database

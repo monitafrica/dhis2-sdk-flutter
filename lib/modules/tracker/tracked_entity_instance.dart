@@ -14,7 +14,8 @@ class TrackedEntityInstance {
   bool deleted;
   String featureType;
 
-  List<Attributes> attributes;
+  @Column()
+  List<Attribute> attributes;
 
   TrackedEntityInstance(
       {this.created,
@@ -41,9 +42,9 @@ class TrackedEntityInstance {
     deleted = json['deleted'];
     featureType = json['featureType'];
     if (json['attributes'] != null) {
-      attributes = new List<Attributes>();
+      attributes = new List<Attribute>();
       json['attributes'].forEach((v) {
-        attributes.add(new Attributes.fromJson(v));
+        attributes.add(new Attribute.fromJson(v));
       });
     }
   }
@@ -65,10 +66,38 @@ class TrackedEntityInstance {
     }
     return data;
   }
+
+  getValue(String attribute){
+    if(this.attributes == null){
+      return null;
+    }
+    List<Attribute> attributes = this.attributes.where((element) => element.attribute == attribute).toList();
+    if(attributes.length > 0){
+      return attributes.first.value;
+    }else{
+      return null;
+    }
+  }
+
+  setValue(String attribute, String value){
+    if(this.attributes == null){
+      this.attributes = new List<Attribute>();
+    }
+    bool valueExists = false;
+    this.attributes.forEach((element) {
+      if(element.attribute == attribute){
+        element.value = value;
+        valueExists = true;
+      }
+    });
+    if(!valueExists){
+      this.attributes.add(Attribute(attribute: attribute, value: value));
+    }
+  }
 }
 
 @Model
-class Attributes {
+class Attribute {
   String lastUpdated;
   String storedBy;
   String displayName;
@@ -77,7 +106,7 @@ class Attributes {
   String attribute;
   String value;
 
-  Attributes(
+  Attribute(
       {this.lastUpdated,
         this.storedBy,
         this.displayName,
@@ -86,7 +115,7 @@ class Attributes {
         this.attribute,
         this.value});
 
-  Attributes.fromJson(Map<String, dynamic> json) {
+  Attribute.fromJson(Map<String, dynamic> json) {
     lastUpdated = json['lastUpdated'];
     storedBy = json['storedBy'];
     displayName = json['displayName'];

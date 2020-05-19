@@ -19,6 +19,8 @@ class Event {
   String storedBy;
   @Column()
   List<DataValue> dataValues;
+  @Column()
+  List<Note> notes;
   bool deleted;
   String created;
   String lastUpdated;
@@ -44,6 +46,7 @@ class Event {
         this.dueDate,
         this.storedBy,
         this.dataValues,
+        this.notes,
         this.deleted,
         this.created,
         this.lastUpdated,
@@ -77,6 +80,15 @@ class Event {
         dataValues.add(new DataValue.fromJson(v));
       });
     }
+    if (json['notes'] != null) {
+      if(json['notes'].runtimeType == String){
+        json['notes'] = jsonDecode(json['notes']);
+      }
+      notes = new List<Note>();
+      json['notes'].forEach((v) {
+        notes.add(new Note.fromJson(v));
+      });
+    }
     deleted = json['deleted'];
     created = json['created'];
     lastUpdated = json['lastUpdated'];
@@ -106,6 +118,9 @@ class Event {
     if (this.dataValues != null) {
       data['dataValues'] = this.dataValues.map((v) => v.toJson()).toList();
     }
+    if (this.notes != null) {
+      data['notes'] = this.notes.map((v) => v.toJson()).toList();
+    }
     data['deleted'] = this.deleted;
     data['created'] = this.created;
     data['lastUpdated'] = this.lastUpdated;
@@ -116,6 +131,33 @@ class Event {
     data['completedBy'] = this.completedBy;
     data['completedDate'] = this.completedDate;
     return data;
+  }
+  getValue(String dataElement){
+    if(this.dataValues == null){
+      return null;
+    }
+    List<DataValue> dataValues = this.dataValues.where((element) => element.dataElement == dataElement).toList();
+    if(dataValues.length > 0){
+      return dataValues[0].value;
+    }else{
+      return null;
+    }
+  }
+
+  setValue(String dataElement, String value){
+    if(this.dataValues == null){
+      this.dataValues = new List<DataValue>();
+    }
+    bool valueExists = false;
+    this.dataValues.forEach((element) {
+      if(element.dataElement == dataElement){
+        element.value = value;
+        valueExists = true;
+      }
+    });
+    if(!valueExists){
+      this.dataValues.add(DataValue(dataElement: dataElement, value: value));
+    }
   }
 }
 
@@ -153,6 +195,23 @@ class DataValue {
     data['dataElement'] = this.dataElement;
     data['providedElsewhere'] = this.providedElsewhere;
     data['storedBy'] = this.storedBy;
+    return data;
+  }
+}
+
+@Model
+class Note {
+  String value;
+
+  Note({this.value});
+
+  Note.fromJson(Map<String, dynamic> json) {
+    value = json['value'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['value'] = this.value;
     return data;
   }
 }
