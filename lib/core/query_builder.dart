@@ -27,7 +27,10 @@ class QueryBuilder {
   OnlineQuery sOnlineQuery;
 
   OnlineQuery getOnlineQuery(){
-    return sOnlineQuery;
+    if(sOnlineQuery != null){
+      return sOnlineQuery;
+    }
+    return OnlineQuery();
   }
   SelectQuery getQueryStructure(){
     List<String> where = [];

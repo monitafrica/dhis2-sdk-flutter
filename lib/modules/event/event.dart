@@ -201,16 +201,25 @@ class DataValue {
 
 @Model
 class Note {
+  String note;
+  String storedDate;
+  String storedBy;
   String value;
 
-  Note({this.value});
+  Note({this.note, this.storedDate, this.storedBy, this.value});
 
   Note.fromJson(Map<String, dynamic> json) {
+    note = json['note'];
+    storedDate = json['storedDate'];
+    storedBy = json['storedBy'];
     value = json['value'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['note'] = this.note;
+    data['storedDate'] = this.storedDate;
+    data['storedBy'] = this.storedBy;
     data['value'] = this.value;
     return data;
   }

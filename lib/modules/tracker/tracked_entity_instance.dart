@@ -1,5 +1,6 @@
 
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/modules/event/event.dart';
 
 @Model
 class TrackedEntityInstance {
@@ -17,6 +18,9 @@ class TrackedEntityInstance {
   @Column()
   List<Attribute> attributes;
 
+  @Column()
+  List<Enrollment> enrollments;
+
   TrackedEntityInstance(
       {this.created,
         this.orgUnit,
@@ -28,7 +32,8 @@ class TrackedEntityInstance {
         this.inactive,
         this.deleted,
         this.featureType,
-        this.attributes});
+        this.attributes,
+        this.enrollments});
 
   TrackedEntityInstance.fromJson(Map<String, dynamic> json) {
     created = json['created'];
@@ -47,6 +52,12 @@ class TrackedEntityInstance {
         attributes.add(new Attribute.fromJson(v));
       });
     }
+    if (json['enrollments'] != null) {
+      enrollments = new List<Enrollment>();
+      json['enrollments'].forEach((v) {
+        enrollments.add(new Enrollment.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -63,6 +74,9 @@ class TrackedEntityInstance {
     data['featureType'] = this.featureType;
     if (this.attributes != null) {
       data['attributes'] = this.attributes.map((v) => v.toJson()).toList();
+    }
+    if (this.enrollments != null) {
+      data['enrollments'] = this.enrollments.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -137,3 +151,89 @@ class Attribute {
     return data;
   }
 }
+
+@Model
+class Enrollment {
+  String storedBy;
+  String created;
+  String orgUnit;
+  String createdAtClient;
+  String program;
+  String trackedEntityInstance;
+  String enrollment;
+  String lastUpdated;
+  String trackedEntityType;
+  String lastUpdatedAtClient;
+  String orgUnitName;
+  String enrollmentDate;
+  bool deleted;
+  String incidentDate;
+  String status;
+  List<Note> notes;
+
+  Enrollment(
+      {this.storedBy,
+        this.created,
+        this.orgUnit,
+        this.createdAtClient,
+        this.program,
+        this.trackedEntityInstance,
+        this.enrollment,
+        this.lastUpdated,
+        this.trackedEntityType,
+        this.lastUpdatedAtClient,
+        this.orgUnitName,
+        this.enrollmentDate,
+        this.deleted,
+        this.incidentDate,
+        this.status,
+        this.notes});
+
+  Enrollment.fromJson(Map<String, dynamic> json) {
+    storedBy = json['storedBy'];
+    created = json['created'];
+    orgUnit = json['orgUnit'];
+    createdAtClient = json['createdAtClient'];
+    program = json['program'];
+    trackedEntityInstance = json['trackedEntityInstance'];
+    enrollment = json['enrollment'];
+    lastUpdated = json['lastUpdated'];
+    trackedEntityType = json['trackedEntityType'];
+    lastUpdatedAtClient = json['lastUpdatedAtClient'];
+    orgUnitName = json['orgUnitName'];
+    enrollmentDate = json['enrollmentDate'];
+    deleted = json['deleted'];
+    incidentDate = json['incidentDate'];
+    status = json['status'];
+    if (json['notes'] != null) {
+      notes = new List<Note>();
+      json['notes'].forEach((v) {
+        notes.add(new Note.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['storedBy'] = this.storedBy;
+    data['created'] = this.created;
+    data['orgUnit'] = this.orgUnit;
+    data['createdAtClient'] = this.createdAtClient;
+    data['program'] = this.program;
+    data['trackedEntityInstance'] = this.trackedEntityInstance;
+    data['enrollment'] = this.enrollment;
+    data['lastUpdated'] = this.lastUpdated;
+    data['trackedEntityType'] = this.trackedEntityType;
+    data['lastUpdatedAtClient'] = this.lastUpdatedAtClient;
+    data['orgUnitName'] = this.orgUnitName;
+    data['enrollmentDate'] = this.enrollmentDate;
+    data['deleted'] = this.deleted;
+    data['incidentDate'] = this.incidentDate;
+    data['status'] = this.status;
+    if (this.notes != null) {
+      data['notes'] = this.notes.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+

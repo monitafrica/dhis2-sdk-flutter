@@ -11,6 +11,7 @@ import 'database_provider.dart';
 import 'dhis2.dart';
 import 'http_provider.dart';
 import 'model.dart';
+import 'dart:developer' as dev;
 
 class ModelProvider extends ChangeNotifier {
   DHISHttpClient client = new DHISHttpClient();
@@ -66,12 +67,127 @@ class ModelProvider extends ChangeNotifier {
     //await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
     notifyListeners();
   }
+
+  Future<dynamic> downloadMemory<T>(QueryBuilder queryBuilder) async {
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String parameters = '';
+    if(onlineQuery.fields != null){
+      if(parameters==''){
+        parameters += '?';
+      }
+      parameters += 'fields=${onlineQuery.fields}';
+    }
+    if(onlineQuery.parameters != null){
+      onlineQuery.parameters.forEach((key, value) {
+        if(parameters==''){
+          parameters += '?';
+        }else{
+          parameters += '&';
+        }
+        parameters += '$key=$value';
+      });
+    }
+    if(parameters == ''){
+      parameters += '?';
+    }else{
+      parameters += '&';
+    }
+    parameters += 'paging=false';
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
+    print(url);
+    Response<dynamic> response = await this.client.get(url);
+    if(onlineQuery.resultField == null){
+      return getObject<T>(response.data);
+    }else{
+      return response.data[onlineQuery.resultField].map((resultMap) => getObject<T>(resultMap));
+    }
+  }
+
+  Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
+    ClassMirror classMirror = Model.reflectType(T);
+    SelectQuery selectQuery = queryBuilder.getQueryStructure();
+    List<T> entities = (await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where))
+        .map((e) {
+      return getObject<T>(e);
+    }).toList();
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String parameters = '';
+    if(onlineQuery.fields != null){
+      if(parameters==''){
+        parameters += '?';
+      }
+      parameters += 'fields=${onlineQuery.fields}';
+    }
+    if(onlineQuery.parameters != null){
+      onlineQuery.parameters.forEach((key, value) {
+        if(parameters==''){
+          parameters += '?';
+        }else{
+          parameters += '&';
+        }
+        parameters += '$key=$value';
+      });
+    }
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
+    print(url);
+    dev.log(jsonEncode({
+      onlineQuery.endpoint: entities.map((e){
+        InstanceMirror instanceMirror = Model.reflect(e);
+        Map data = instanceMirror.invoke('toJson',[]);
+        removeNullAndEmptyParams(data);
+        return data;
+      }).toList()
+    }));
+    Response<dynamic> response = await this.client.post(url,{
+      onlineQuery.endpoint: entities.map((e){
+        InstanceMirror instanceMirror = Model.reflect(e);
+        Map data = instanceMirror.invoke('toJson',[]);
+        removeNullAndEmptyParams(data);
+        return data;
+      }).toList()
+    });
+    return response.data;
+    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+  Future<T> singleDownloadMemory<T>(QueryBuilder queryBuilder) async {
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String parameters = '';
+    if(onlineQuery.fields != null){
+      if(parameters==''){
+        parameters += '?';
+      }
+      parameters += 'fields=${onlineQuery.fields}';
+    }
+    if(onlineQuery.parameters != null){
+      onlineQuery.parameters.forEach((key, value) {
+        if(parameters==''){
+          parameters += '?';
+        }else{
+          parameters += '&';
+        }
+        parameters += '$key=$value';
+      });
+    }
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
+    Response<dynamic> response = await this.client.get(url);
+    return getObject<T>(response.data);
+  }
   Future<T> save<T>(T model) async {
     Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
     for(String key in results.keys){
       await dbClient.saveItemMap(key, results[key]);
     }
     return model;
+  }
+
+  Future<List<T>> saveAll<T>(List<T> models) async {
+    for(T model in models){
+      await save<T>(model);
+    }
+    return models;
   }
 
   Future<T> update<T>(T model,String criteria) async {
@@ -118,6 +234,26 @@ class ModelProvider extends ChangeNotifier {
   }
 }
 
+void removeNullAndEmptyParams(Map<String, Object> mapToEdit) {
+// Remove all null values; they cause validation errors
+  final keys = mapToEdit.keys.toList(growable: false);
+  for (String key in keys) {
+    final value = mapToEdit[key];
+    if (value == null) {
+      mapToEdit.remove(key);
+    } else if (value is String) {
+      if (value.isEmpty) {
+        mapToEdit.remove(key);
+      }
+    } else if (value is Map) {
+      removeNullAndEmptyParams(value);
+    } else if (value is List) {
+      value.forEach((element) {
+        removeNullAndEmptyParams(element);
+      });
+    }
+  }
+}
 getTableColumns<T>() {}
 
 Map<String, List<String>> getTableColumnDefinitions<T>({Type type}) {
