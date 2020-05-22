@@ -3,8 +3,9 @@ import 'package:dhis2sdk/core/model.dart';
 
 @Model
 class OrganisationUnit {
-  String lastUpdated;
+  @PrimaryKey()
   String id;
+  String lastUpdated;
   String href;
   int level;
   String created;

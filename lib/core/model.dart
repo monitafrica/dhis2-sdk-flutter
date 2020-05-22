@@ -26,6 +26,9 @@ class MapField {
 class Column {
   const Column();
 }
+class PrimaryKey {
+  const PrimaryKey();
+}
 
 class Relation {
   final String columnId;

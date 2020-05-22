@@ -37,6 +37,7 @@ void main() {
 
     expect(metadata['event']!=null,true);
     expect(metadata['event'].indexOf('dataValues TEXT') > -1,true);
+    expect(metadata['event'].indexOf('event TEXT PRIMARY KEY') > -1,true);
 
     Event newEvent = Event.fromJson(userMap['event']);
 

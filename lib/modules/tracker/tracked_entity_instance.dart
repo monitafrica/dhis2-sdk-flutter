@@ -4,10 +4,11 @@ import 'package:dhis2sdk/modules/event/event.dart';
 
 @Model
 class TrackedEntityInstance {
+  @PrimaryKey()
+  String trackedEntityInstance;
   String created;
   String orgUnit;
   String createdAtClient;
-  String trackedEntityInstance;
   String lastUpdated;
   String trackedEntityType;
   String lastUpdatedAtClient;

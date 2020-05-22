@@ -5,8 +5,10 @@ import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 
 @Model
 class User implements ModelInterface{
-  String lastUpdated;
+
+  @PrimaryKey()
   String id;
+  String lastUpdated;
   String href;
   String created;
   String name;

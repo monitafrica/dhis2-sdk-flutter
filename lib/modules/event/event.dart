@@ -4,8 +4,9 @@ import 'package:dhis2sdk/core/model.dart';
 
 @Model
 class Event {
-  String href;
+  @PrimaryKey()
   String event;
+  String href;
   String status;
   String program;
   String programStage;

@@ -269,28 +269,32 @@ Map<String, List<String>> getTableColumnDefinitions<T>({Type type}) {
     var value = classMirror.declarations[key];
     if (value is VariableMirror) {
       VariableMirror variableMirror = value;
-
-      if (variableMirror.reflectedType == String) {
-        if (key == 'id') {
+      bool isPrimaryKey = false;
+      variableMirror.metadata.forEach((element) {
+        if(element is PrimaryKey){
           columns.add('$key TEXT PRIMARY KEY');
-        } else {
-          columns.add('$key TEXT');
+          isPrimaryKey = true;
         }
-      } else if (variableMirror.reflectedType == int) {
-        columns.add('$key INTEGER');
-      } else if (variableMirror.reflectedType == bool) {
-        columns.add('$key BOOLEAN');
-      }else {
-        variableMirror.metadata.forEach((element) {
-          if (element is Column) {
-            columns.add('$key TEXT');
-          } else if (element is OneToOne) {
-            Map<String, List<String>> tempTables = getTableColumnDefinitions(type: variableMirror.reflectedType);
-            tables.addAll(tempTables);
-          } else {
+      });
+      if(!isPrimaryKey){
+        if (variableMirror.reflectedType == String) {
+          columns.add('$key TEXT');
+        } else if (variableMirror.reflectedType == int) {
+          columns.add('$key INTEGER');
+        } else if (variableMirror.reflectedType == bool) {
+          columns.add('$key BOOLEAN');
+        }else {
+          variableMirror.metadata.forEach((element) {
+            if (element is Column) {
+              columns.add('$key TEXT');
+            } else if (element is OneToOne) {
+              Map<String, List<String>> tempTables = getTableColumnDefinitions(type: variableMirror.reflectedType);
+              tables.addAll(tempTables);
+            } else {
 
-          }
-        });
+            }
+          });
+        }
       }
     }
   }

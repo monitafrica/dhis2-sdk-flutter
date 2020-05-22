@@ -4,8 +4,9 @@ import 'package:dhis2sdk/core/model.dart';
 
 @Model
 class Credential implements ModelInterface{
-  String url;
+  @PrimaryKey()
   String username;
+  String url;
   String password;
 
   Credential({this.url, this.username, this.password});

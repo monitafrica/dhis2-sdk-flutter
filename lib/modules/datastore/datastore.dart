@@ -3,6 +3,9 @@ import 'package:dhis2sdk/core/model.dart';
 
 @Model
 class DataStore implements ModelInterface{
+
+  @PrimaryKey()
+  String id;
   String created;
   String lastUpdated;
   bool externalAccess;
@@ -10,7 +13,6 @@ class DataStore implements ModelInterface{
   String key;
   String value;
   bool favorite;
-  String id;
 
   DataStore(
       {this.created,
