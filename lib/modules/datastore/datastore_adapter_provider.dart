@@ -10,6 +10,7 @@ import 'package:dhis2sdk/modules/user/credential.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
 import 'package:dio/dio.dart';
 import 'package:reflectable/reflectable.dart';
+import 'dart:developer' as dev;
 
 import 'datastore_model_adapter.dart';
 
@@ -146,6 +147,7 @@ class DatastoreAdapterModel extends ModelProvider{
       try{
         results.add(getObject<T>(jsonDecode(element.value)));
       }catch(e, s){
+        dev.log(jsonEncode(element.value));
         print(s);
       }
     });

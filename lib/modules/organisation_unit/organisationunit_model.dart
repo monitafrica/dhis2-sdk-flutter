@@ -15,7 +15,7 @@ class OrganisationUnitModel extends ModelProvider{
 
   }
 
-  Future downloadAll() async{
+  Future downloadAll([onProgress]) async{
     Credential credential = DHIS2.credentials;
     Map<String,dynamic> pager = {
       'page': 0
@@ -26,7 +26,10 @@ class OrganisationUnitModel extends ModelProvider{
       List<dynamic> orgUnitMaps = response.data['organisationUnits'];
       pager = response.data['pager'];
       for(dynamic ouMap in orgUnitMaps){
-        await save(OrganisationUnit.fromJson(ouMap));
+        await save<OrganisationUnit>(OrganisationUnit.fromJson(ouMap));
+      }
+      if(onProgress != null){
+        onProgress(pager['page'] * pager['pageSize']/pager['total']);
       }
     }while(pager['page'] != pager['pageCount']);
     notifyListeners();
@@ -63,8 +66,12 @@ class OrganisationUnitModel extends ModelProvider{
   }
   Future<List<OrganisationUnit>> getAncestors(String id) async {
     OrganisationUnit organisationUnit = await getById(id);
-    QueryBuilder queryBuilder = QueryBuilder();
-    queryBuilder.filter(Filter(left:"id",operator: 'in', right: organisationUnit.path.split('/')));
-    return await getByQuery<OrganisationUnit>(queryBuilder);
+    if(organisationUnit != null){
+      QueryBuilder queryBuilder = QueryBuilder();
+      queryBuilder.filter(Filter(left:"id",operator: 'in', right: organisationUnit.path.split('/')));
+      return await getByQuery<OrganisationUnit>(queryBuilder);
+    }else{
+      return [];
+    }
   }
 }

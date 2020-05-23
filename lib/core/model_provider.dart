@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dhis2sdk/core/query_builder.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
@@ -50,6 +51,7 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
+    print(url);
     Response<dynamic> response = await this.client.get(url);
     dynamic result = response.data[onlineQuery.endpoint];
     if(onlineQuery.resultField == null){
@@ -57,6 +59,7 @@ class ModelProvider extends ChangeNotifier {
     }else{
       result = response.data[onlineQuery.resultField];
     }
+    print(result.length);
     if(result is List){
       for(Map<String,dynamic> resultMap in result){
         await save(getObject<T>(resultMap));
@@ -95,7 +98,6 @@ class ModelProvider extends ChangeNotifier {
     }
     parameters += 'paging=false';
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
-    print(url);
     Response<dynamic> response = await this.client.get(url);
     if(onlineQuery.resultField == null){
       return getObject<T>(response.data);
@@ -131,7 +133,6 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
-    print(url);
     dev.log(jsonEncode({
       onlineQuery.endpoint: entities.map((e){
         InstanceMirror instanceMirror = Model.reflect(e);
@@ -148,6 +149,29 @@ class ModelProvider extends ChangeNotifier {
         return data;
       }).toList()
     });
+    return response.data;
+    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+
+  Future<dynamic> uploadFile(String filePath) async {
+    Credential credential = DHIS2.credentials;
+    String url = credential.url + '/api/fileResources';
+    List<String> dir = filePath.split('/');
+    FormData formData = FormData.fromMap({
+      "file": await MultipartFile.fromFile(filePath,filename: dir[dir.length - 1]),
+    });
+    print(url);
+    Response<dynamic> response = await this.client.post(url,formData);
+    return response.data;
+    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  }
+  Future<dynamic> downloadFile(String filePath, String endpoint) async {
+    Credential credential = DHIS2.credentials;
+    String url = credential.url + '/api/$endpoint';
+    print(url);
+    Response response = await this.client.get(url);
+    File file = new File(filePath);
+    await file.writeAsBytes(response.data);
     return response.data;
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
@@ -178,7 +202,19 @@ class ModelProvider extends ChangeNotifier {
   Future<T> save<T>(T model) async {
     Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
     for(String key in results.keys){
-      await dbClient.saveItemMap(key, results[key]);
+      try{
+        await dbClient.saveItemMap(key, results[key]);
+      }catch(e,s){
+        if(e.message.contains('UNIQUE constraint failed')){
+          String key = getPrimaryKey<T>();
+          InstanceMirror instanceMirror = Model.reflect(model);
+          await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'");
+        }else{
+          print(e);
+          print(s);
+          throw(e);
+        }
+      }
     }
     return model;
   }
@@ -255,7 +291,27 @@ void removeNullAndEmptyParams(Map<String, Object> mapToEdit) {
   }
 }
 getTableColumns<T>() {}
-
+String getPrimaryKey<T>({Type type}) {
+  ClassMirror classMirror;
+  if (type != null) {
+    classMirror = Model.reflectType(type);
+  } else {
+    classMirror = Model.reflectType(T);
+  }
+  String primaryKey;
+  for (String key in classMirror.declarations.keys) {
+    var value = classMirror.declarations[key];
+    if (value is VariableMirror) {
+      VariableMirror variableMirror = value;
+      variableMirror.metadata.forEach((element) {
+        if(element is PrimaryKey){
+          primaryKey = key;
+        }
+      });
+    }
+  }
+  return primaryKey;
+}
 Map<String, List<String>> getTableColumnDefinitions<T>({Type type}) {
   ClassMirror classMirror;
   if (type != null) {

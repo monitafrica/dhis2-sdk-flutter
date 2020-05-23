@@ -99,7 +99,6 @@ class DatabaseHelper {
       if(e.message.indexOf('SQLITE_CONSTRAINT_PRIMARYKEY') > -1){
         return await dbClient.update(tableName,values,where:"id = '${values['id']}'");
       }else{
-        print(e);
         throw e;
       }
     }
