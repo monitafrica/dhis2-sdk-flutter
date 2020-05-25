@@ -51,7 +51,7 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
-    print(url);
+    print('Download:$url');
     Response<dynamic> response = await this.client.get(url);
     dynamic result = response.data[onlineQuery.endpoint];
     if(onlineQuery.resultField == null){
@@ -59,7 +59,7 @@ class ModelProvider extends ChangeNotifier {
     }else{
       result = response.data[onlineQuery.resultField];
     }
-    print(result.length);
+    print(result);
     if(result is List){
       for(Map<String,dynamic> resultMap in result){
         await save(getObject<T>(resultMap));
@@ -134,6 +134,7 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
+    print('Upload:$url');
     dev.log(jsonEncode({
       onlineQuery.endpoint: entities.map((e){
         InstanceMirror instanceMirror = Model.reflect(e);
@@ -161,7 +162,7 @@ class ModelProvider extends ChangeNotifier {
     FormData formData = FormData.fromMap({
       "file": await MultipartFile.fromFile(filePath,filename: dir[dir.length - 1]),
     });
-    print(url);
+    print('Upload File:$url');
     Response<dynamic> response = await this.client.post(url,formData);
     return response.data;
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
@@ -169,7 +170,7 @@ class ModelProvider extends ChangeNotifier {
   Future<dynamic> downloadFile(String filePath, String endpoint) async {
     Credential credential = DHIS2.credentials;
     String url = credential.url + '/api/$endpoint';
-    print(url);
+    print('Download File:$url');
     Response response = await this.client.get(url);
     File file = new File(filePath);
     await file.writeAsBytes(response.data);
@@ -197,6 +198,7 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
+    print('Single Download Memory:$url');
     Response<dynamic> response = await this.client.get(url);
     return getObject<T>(response.data);
   }
