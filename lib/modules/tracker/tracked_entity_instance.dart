@@ -109,6 +109,9 @@ class TrackedEntityInstance {
       this.attributes.add(Attribute(attribute: attribute, value: value));
     }
   }
+  TrackedEntityInstance castToTracker(){
+    return TrackedEntityInstance.fromJson(this.toJson());
+  }
 }
 
 @Model

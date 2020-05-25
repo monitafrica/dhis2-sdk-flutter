@@ -98,6 +98,7 @@ class ModelProvider extends ChangeNotifier {
     }
     parameters += 'paging=false';
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
+    print('From Memory:$url');
     Response<dynamic> response = await this.client.get(url);
     if(onlineQuery.resultField == null){
       return getObject<T>(response.data);
@@ -205,13 +206,13 @@ class ModelProvider extends ChangeNotifier {
       try{
         await dbClient.saveItemMap(key, results[key]);
       }catch(e,s){
-        if(e.message.contains('UNIQUE constraint failed')){
+        print(e);
+        print(s);
+        if(e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id')){
           String key = getPrimaryKey<T>();
           InstanceMirror instanceMirror = Model.reflect(model);
           await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'");
         }else{
-          print(e);
-          print(s);
           throw(e);
         }
       }

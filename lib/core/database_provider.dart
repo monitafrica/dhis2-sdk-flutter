@@ -91,17 +91,7 @@ class DatabaseHelper {
   //Insertion
   Future<int> saveItemMap(String tableName, values) async {
     var dbClient = await db;
-    //String query = "INSERT INTO $tableName(${columns.join(',')}) VALUES(${values.join(',')})";
-    //print(query);
-    try{
-      return await dbClient.insert(tableName,values);
-    }catch(e){
-      if(e.message.indexOf('SQLITE_CONSTRAINT_PRIMARYKEY') > -1){
-        return await dbClient.update(tableName,values,where:"id = '${values['id']}'");
-      }else{
-        throw e;
-      }
-    }
+    return await dbClient.insert(tableName,values);
   }
 
   Future<int> updateItemMap(String tableName, criteria,values) async {
