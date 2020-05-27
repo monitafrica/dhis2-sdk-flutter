@@ -20,6 +20,11 @@ class OnlineQuery {
   OnlineQuery({this.fields,this.where,this.endpoint, this.resultField, this.parameters});
 }
 
+class WhereClauseException implements Exception {
+  String msg;
+  WhereClauseException(this.msg);
+  String errMsg() => msg;
+}
 class QueryBuilder {
 
   List<String> fields = [];
@@ -44,8 +49,11 @@ class QueryBuilder {
         where.add("${element.left} ${element.operator} '${element.right}'");
       }else if(element.right.runtimeType == int){
         where.add("${element.left} ${element.operator} ${element.right}");
+      }else if(element.right.runtimeType == bool){
+        print("${element.left} ${element.operator} ${element.right}");
+        where.add("${element.left} = ${element.right?1:0}");
       }else{
-
+        throw WhereClauseException('Where clause of type ${element.right.runtimeType.toString()} does not exist');
       }
     });
     return SelectQuery(where: where,fields: fields);
