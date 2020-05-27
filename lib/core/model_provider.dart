@@ -202,18 +202,17 @@ class ModelProvider extends ChangeNotifier {
     Response<dynamic> response = await this.client.get(url);
     return getObject<T>(response.data);
   }
-  Future<T> save<T>(T model) async {
+  Future<T> save<T>(T model,{isDirty = false}) async {
     Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
     for(String key in results.keys){
       try{
+        results[key]['isdirty'] = isDirty;
         await dbClient.saveItemMap(key, results[key]);
       }catch(e,s){
-        print(e);
-        print(s);
         if(e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id')){
           String key = getPrimaryKey<T>();
           InstanceMirror instanceMirror = Model.reflect(model);
-          await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'");
+          await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: isDirty);
         }else{
           throw(e);
         }
@@ -229,9 +228,10 @@ class ModelProvider extends ChangeNotifier {
     return models;
   }
 
-  Future<T> update<T>(T model,String criteria) async {
+  Future<T> update<T>(T model,String criteria,{isDirty = false}) async {
     Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
     for(String key in results.keys){
+      results[key]['isdirty'] = isDirty;
       await dbClient.updateItemMap(key, criteria, results[key]);
     }
     return model;
@@ -357,6 +357,7 @@ Map<String, List<String>> getTableColumnDefinitions<T>({Type type}) {
       }
     }
   }
+  columns.add('isdirty BOOLEAN');
   tables[classMirror.simpleName.toLowerCase()] = columns;
   return tables;
 }

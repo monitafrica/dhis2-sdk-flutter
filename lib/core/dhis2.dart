@@ -74,8 +74,6 @@ class DHIS2 {
     DHIS2.credentials = credentials;
     await DHIS2.User.initialize<UserImport.User>();
 
-    UserImport.User currentUser = await DHIS2.User.authenticate();
-
     await DHIS2.Datastore.initialize<DatastoreImport.DataStore>();
 
     await DHIS2.Credential.initialize<CredentialImport.Credential>();
@@ -85,6 +83,7 @@ class DHIS2 {
     await DHIS2.Event.initialize<EventImport.Event>();
 
     await DHIS2.Tracker.initialize<TrackerImport.TrackedEntityInstance>();
+    UserImport.User currentUser = await DHIS2.User.authenticate();
     DHIS2.isLogingIn = false;
 
 
