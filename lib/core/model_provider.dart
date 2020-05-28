@@ -135,6 +135,14 @@ class ModelProvider extends ChangeNotifier {
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
     print('Upload:$url');
+    dev.log(jsonEncode({
+      onlineQuery.endpoint: entities.map((e){
+        InstanceMirror instanceMirror = Model.reflect(e);
+        Map data = instanceMirror.invoke('toJson',[]);
+        removeNullAndEmptyParams(data);
+        return data;
+      }).toList()
+    }));
     Response<dynamic> response = await this.client.post(url,{
       onlineQuery.endpoint: entities.map((e){
         InstanceMirror instanceMirror = Model.reflect(e);
