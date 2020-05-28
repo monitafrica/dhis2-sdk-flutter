@@ -57,7 +57,7 @@ class DHIS2 {
 
     changeNotifierProviders.add(ChangeNotifierProvider<TrackerModel>(create: (context) => DHIS2.Tracker));
 
-    DHIS2.Credential.loadCredential();
+    //DHIS2.Credential.loadCredential();
 
     //OrganisationUnit.initialize<OrgUnitImport.OrganisationUnit>();
 

@@ -428,7 +428,7 @@ packages:
       name: reflectable
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.2.1+2"
+    version: "2.2.4"
   shared_preferences:
     dependency: "direct main"
     description:

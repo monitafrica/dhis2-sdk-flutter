@@ -76,7 +76,7 @@ class Event {
       if(json['dataValues'].runtimeType == String){
         json['dataValues'] = jsonDecode(json['dataValues']);
       }
-      dataValues = new List<DataValue>();
+      dataValues = List<DataValue>();
       json['dataValues'].forEach((v) {
         dataValues.add(new DataValue.fromJson(v));
       });

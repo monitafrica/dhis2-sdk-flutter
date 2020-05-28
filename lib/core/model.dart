@@ -2,7 +2,7 @@
 import 'package:reflectable/reflectable.dart';
 
 class ModelReflectable extends Reflectable {
-  const ModelReflectable() : super(invokingCapability,declarationsCapability,reflectedTypeCapability,newInstanceCapability, metadataCapability);
+  const ModelReflectable() : super(invokingCapability,declarationsCapability,reflectedTypeCapability,newInstanceCapability, metadataCapability,typeCapability);
 }
 
 const Model = ModelReflectable();

@@ -25,9 +25,11 @@ class CredentialModel  extends ModelProvider{
     } finally {
       finishedInitialize();
     }
+    print('Heutwe');
+    return DHIS2.User.currentUser;
   }
   void finishedInitialize() {
     isInitializing = false;
-    notifyListeners();
+    //notifyListeners();
   }
 }

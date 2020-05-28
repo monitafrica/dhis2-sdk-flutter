@@ -208,6 +208,7 @@ class ModelProvider extends ChangeNotifier {
         await dbClient.saveItemMap(key, results[key]);
       }catch(e,s){
         if(e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id')){
+          print('What: ${e.message}');
           String key = getPrimaryKey<T>();
           InstanceMirror instanceMirror = Model.reflect(model);
           await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: isDirty);
@@ -402,7 +403,7 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
         var otherObject = instanceMirror.invokeGetter(key);
         variableMirror.metadata.forEach((element) {
           if (element is Column) {
-            if(instanceMirror.invokeGetter(key).runtimeType.toString().startsWith("List<")){
+            if(instanceMirror.invokeGetter(key).runtimeType.toString().contains("List<")){
               resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode((instanceMirror.invokeGetter(key) as List).map((object){
                 return getDBMap(object,type: object.runtimeType)[object.runtimeType.toString().toLowerCase()];
               }).toList());
