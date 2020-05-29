@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/modules/tracker/tracked_entity_instance.dart';
 
 @Model
 class Event {
@@ -31,6 +32,10 @@ class Event {
   String attributeCategoryOptions;
   String completedBy;
   String completedDate;
+  @Column()
+  Coordinate coordinate;
+  @Column()
+  Geometry geometry;
 
   Event(
       {this.href,
