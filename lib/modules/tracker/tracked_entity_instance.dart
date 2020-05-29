@@ -173,6 +173,8 @@ class Enrollment {
   bool deleted;
   String incidentDate;
   String status;
+  Coordinate coordinate;
+  Geometry geometry;
   List<Note> notes;
 
   Enrollment(
@@ -215,6 +217,12 @@ class Enrollment {
         notes.add(new Note.fromJson(v));
       });
     }
+    coordinate = json['coordinate'] != null
+        ? new Coordinate.fromJson(json['coordinate'])
+        : null;
+    geometry = json['geometry'] != null
+        ? new Geometry.fromJson(json['geometry'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -237,6 +245,52 @@ class Enrollment {
     if (this.notes != null) {
       data['notes'] = this.notes.map((v) => v.toJson()).toList();
     }
+    if (this.coordinate != null) {
+      data['coordinate'] = this.coordinate.toJson();
+    }
+    if (this.geometry != null) {
+      data['geometry'] = this.geometry.toJson();
+    }
+    return data;
+  }
+}
+
+@Model
+class Coordinate {
+  double latitude;
+  double longitude;
+
+  Coordinate({this.latitude, this.longitude});
+
+  Coordinate.fromJson(Map<String, dynamic> json) {
+    latitude = json['latitude'];
+    longitude = json['longitude'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['latitude'] = this.latitude;
+    data['longitude'] = this.longitude;
+    return data;
+  }
+}
+
+@Model
+class Geometry {
+  String type;
+  List<double> coordinates;
+
+  Geometry({this.type, this.coordinates});
+
+  Geometry.fromJson(Map<String, dynamic> json) {
+    type = json['type'];
+    coordinates = json['coordinates'].cast<double>();
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['type'] = this.type;
+    data['coordinates'] = this.coordinates;
     return data;
   }
 }
