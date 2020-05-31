@@ -138,6 +138,10 @@ class Event {
     data['completedDate'] = this.completedDate;
     return data;
   }
+
+  Event castToEvent(){
+    return Event.fromJson(this.toJson());
+  }
   getValue(String dataElement){
     if(this.dataValues == null){
       return null;

@@ -114,6 +114,9 @@ class ModelProvider extends ChangeNotifier {
         .map((e) {
       return getObject<T>(e);
     }).toList();
+    if(entities.length == 0){
+      return {};
+    }
     Credential credential = DHIS2.credentials;
     OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
     String parameters = '';
