@@ -7,10 +7,8 @@ import 'package:dio/dio.dart';
 import 'credential.dart';
 
 class UserModel extends ModelProvider{
-  bool isAuthenticating = false;
   User currentUser;
   authenticate() async {
-    isAuthenticating = true;
     notifyListeners();
     Credential credentials = DHIS2.credentials;
 
@@ -20,7 +18,10 @@ class UserModel extends ModelProvider{
         // If the server did return a 200 OK response,
         // then parse the JSON.
         currentUser = User.fromJson(response.data);
+        print('Current User');
         await this.save<User>(currentUser);
+        await this.save<Credential>(credentials);
+        print('Current Here');
         return currentUser;
       } else if(response.statusCode == 404){
         // If the server did not return a 200 OK response,
@@ -41,7 +42,6 @@ class UserModel extends ModelProvider{
         throw new Exception(e.message);
       }
     }finally{
-      isAuthenticating = false;
       notifyListeners();
     }
   }

@@ -121,6 +121,7 @@ class DatastoreAdapterModel extends ModelProvider{
 
     QueryBuilder queryBuilder = QueryBuilder();
     queryBuilder.filter(Filter(left:'namespace',operator: '==', right:classMirror.invokeGetter('namespace')));
+    queryBuilder.filter(filter);
     List<DataStore> data = await super.getByQuery<DataStore>(queryBuilder);
     return data.where((element){
       if(filter.operator == '=='){

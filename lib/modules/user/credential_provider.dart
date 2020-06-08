@@ -6,27 +6,22 @@ import 'package:dhis2sdk/modules/user/user.dart';
 
 class CredentialModel  extends ModelProvider{
   bool isInitializing = true;
-  initialize<T>() async {
-    super.initialize<Credential>();
-    await this.save<Credential>(DHIS2.credentials);
-  }
-
-  Future loadCredential() async {
+  Future<User> loadCredential() async {
     try{
       List<Credential> credentialList = await this.getAll<Credential>();
+      print('credentialList.length');
+      print(credentialList.length);
       if(credentialList.length != 0 ){
         DHIS2.credentials = credentialList.first;
         List<User> users = await DHIS2.User.getAll<User>();
-        DHIS2.User.currentUser = users.first;
+        return users.first;
       }
     }catch(e, s){
-      print(e);
-      print(s);
+      //print(e);
     } finally {
       finishedInitialize();
     }
-    print('Heutwe');
-    return DHIS2.User.currentUser;
+    return null;
   }
   void finishedInitialize() {
     isInitializing = false;
