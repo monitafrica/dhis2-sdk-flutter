@@ -50,7 +50,6 @@ class QueryBuilder {
       }else if(element.right.runtimeType == int){
         where.add("${element.left} ${element.operator} ${element.right}");
       }else if(element.right.runtimeType == bool){
-        print("${element.left} ${element.operator} ${element.right}");
         where.add("${element.left} = ${element.right?1:0}");
       }else{
         throw WhereClauseException('Where clause of type ${element.right.runtimeType.toString()} does not exist');

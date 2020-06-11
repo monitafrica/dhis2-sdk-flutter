@@ -110,8 +110,11 @@ class ModelProvider extends ChangeNotifier {
   Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
     ClassMirror classMirror = Model.reflectType(T);
     SelectQuery selectQuery = queryBuilder.getQueryStructure();
-    List<T> entities = (await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where))
-        .map((e) {
+    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
+    results.forEach((element) {
+      dev.log(jsonEncode(element));
+    });
+    List<T> entities = results.map((e) {
       return getObject<T>(e);
     }).toList();
     if(entities.length == 0){
@@ -138,6 +141,14 @@ class ModelProvider extends ChangeNotifier {
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
     print('Upload:$url');
+    dev.log(jsonEncode({
+      onlineQuery.endpoint: entities.map((e){
+        InstanceMirror instanceMirror = Model.reflect(e);
+        Map data = instanceMirror.invoke('toJson',[]);
+        removeNullAndEmptyParams(data);
+        return data;
+      }).toList()
+    }));
     Response<dynamic> response = await this.client.post(url,{
       onlineQuery.endpoint: entities.map((e){
         InstanceMirror instanceMirror = Model.reflect(e);
@@ -153,6 +164,27 @@ class ModelProvider extends ChangeNotifier {
       await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: false);
     }
     return response.data;
+    /*try{
+      Response<dynamic> response = await this.client.post(url,{
+        onlineQuery.endpoint: entities.map((e){
+          InstanceMirror instanceMirror = Model.reflect(e);
+          Map data = instanceMirror.invoke('toJson',[]);
+          removeNullAndEmptyParams(data);
+          return data;
+        }).toList()
+      });
+
+      String key = getPrimaryKey<T>();
+      for(T model in entities){
+        InstanceMirror instanceMirror = Model.reflect(model);
+        await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: false);
+      }
+      return response.data;
+    } on DioError catch(e){
+      //e.
+      //print(e.response);
+      throw e;
+    }*/
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
 
@@ -211,7 +243,6 @@ class ModelProvider extends ChangeNotifier {
         await dbClient.saveItemMap(key, results[key]);
       }catch(e,s){
         if(e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id')){
-          print('What: ${e.message}');
           String key = getPrimaryKey<T>();
           InstanceMirror instanceMirror = Model.reflect(model);
           await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: isDirty);
@@ -290,7 +321,10 @@ void removeNullAndEmptyParams(Map<String, Object> mapToEdit) {
       removeNullAndEmptyParams(value);
     } else if (value is List) {
       value.forEach((element) {
-        removeNullAndEmptyParams(element);
+        if(element is Map){
+          removeNullAndEmptyParams(element);
+        }
+
       });
     }
   }
@@ -390,37 +424,48 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
     var value = classMirror.declarations[key];
     if (value is VariableMirror) {
       VariableMirror variableMirror = value;
-
-      if (variableMirror.reflectedType == String) {
-        var valueToSave = instanceMirror.invokeGetter(key);
-        if (valueToSave == null) {
-          resultMap[classMirror.simpleName.toLowerCase()][key] = null;
-        } else {
-          resultMap[classMirror.simpleName.toLowerCase()][key] = valueToSave;
-        }
-      } else if (variableMirror.reflectedType == bool) {
-        resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
-      } else if (variableMirror.reflectedType == int) {
-        resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
-      } else {
-        var otherObject = instanceMirror.invokeGetter(key);
-        variableMirror.metadata.forEach((element) {
-          if (element is Column) {
-            if(instanceMirror.invokeGetter(key).runtimeType.toString().contains("List<")){
-              resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode((instanceMirror.invokeGetter(key) as List).map((object){
-                return getDBMap(object,type: object.runtimeType)[object.runtimeType.toString().toLowerCase()];
-              }).toList());
-            }else{
-              if(instanceMirror.invokeGetter(key) != null){
-                Map<String,dynamic> dependeny = getDBMap(instanceMirror.invokeGetter(key),type: instanceMirror.invokeGetter(key).runtimeType);
-                resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode(Map<String, dynamic>.from(dependeny[instanceMirror.invokeGetter(key).runtimeType.toString().toLowerCase()]));
-              }
+      bool isKeyFound = false;
+      variableMirror.metadata.forEach((element) {
+        if (element is Column) {
+          if(instanceMirror.invokeGetter(key).runtimeType.toString().contains("List<")){
+            resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode((instanceMirror.invokeGetter(key) as List).map((object){
+              return getDBMap(object,type: object.runtimeType)[object.runtimeType.toString().toLowerCase()];
+            }).toList());
+            isKeyFound = true;
+          }else{
+            if(instanceMirror.invokeGetter(key) != null){
+              Map<String,dynamic> dependeny = getDBMap(instanceMirror.invokeGetter(key),type: instanceMirror.invokeGetter(key).runtimeType);
+              resultMap[classMirror.simpleName.toLowerCase()][key] = jsonEncode(Map<String, dynamic>.from(dependeny[instanceMirror.invokeGetter(key).runtimeType.toString().toLowerCase()]));
+              isKeyFound = true;
             }
-          }else if (element is OneToOne) {
-            Map<String, dynamic> childMap = getDBMap(otherObject,type:variableMirror.reflectedType);
-            resultMap.addAll(childMap);
           }
-        });
+        }else if (element is OneToOne) {
+          var otherObject = instanceMirror.invokeGetter(key);
+          Map<String, dynamic> childMap = getDBMap(otherObject,type:variableMirror.reflectedType);
+          resultMap.addAll(childMap);
+          isKeyFound = true;
+        }
+      });
+      if(!isKeyFound){
+        if (variableMirror.reflectedType == String) {
+          var valueToSave = instanceMirror.invokeGetter(key);
+          if (valueToSave == null) {
+            resultMap[classMirror.simpleName.toLowerCase()][key] = null;
+          } else {
+            resultMap[classMirror.simpleName.toLowerCase()][key] = valueToSave;
+          }
+        } else if (variableMirror.reflectedType == bool) {
+          resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
+        } else if (variableMirror.reflectedType == int) {
+          resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
+        } else if (variableMirror.reflectedType == double) {
+          resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
+        } else if (variableMirror.reflectedType.toString().contains("List<")) {
+          resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
+        }else {
+          print('Not Found:$key');
+          print(variableMirror.reflectedType );
+        }
       }
     }
   }

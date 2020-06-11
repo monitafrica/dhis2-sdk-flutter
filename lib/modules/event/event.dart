@@ -95,6 +95,12 @@ class Event {
         notes.add(new Note.fromJson(v));
       });
     }
+    if (json['geometry'] != null) {
+      geometry = Geometry.fromJson(json['geometry']);
+    }
+    if (json['coordinate'] != null) {
+      coordinate = Coordinate.fromJson(json['coordinate']);
+    }
     deleted = json['deleted'];
     created = json['created'];
     lastUpdated = json['lastUpdated'];
@@ -127,6 +133,12 @@ class Event {
     if (this.notes != null) {
       data['notes'] = this.notes.map((v) => v.toJson()).toList();
     }
+    if (this.geometry != null) {
+      data['geometry'] = this.geometry.toJson();
+    }
+    if (this.coordinate != null) {
+      data['coordinate'] = this.coordinate.toJson();
+    }
     data['deleted'] = this.deleted;
     data['created'] = this.created;
     data['lastUpdated'] = this.lastUpdated;
@@ -158,15 +170,19 @@ class Event {
     if(this.dataValues == null){
       this.dataValues = new List<DataValue>();
     }
-    bool valueExists = false;
-    this.dataValues.forEach((element) {
-      if(element.dataElement == dataElement){
-        element.value = value;
-        valueExists = true;
+    if(value == null){
+      this.dataValues = this.dataValues.where((element) => element.dataElement != dataElement).toList();
+    }else{
+      bool valueExists = false;
+      this.dataValues.forEach((element) {
+        if(element.dataElement == dataElement){
+          element.value = value;
+          valueExists = true;
+        }
+      });
+      if(!valueExists){
+        this.dataValues.add(DataValue(dataElement: dataElement, value: value));
       }
-    });
-    if(!valueExists){
-      this.dataValues.add(DataValue(dataElement: dataElement, value: value));
     }
   }
 }

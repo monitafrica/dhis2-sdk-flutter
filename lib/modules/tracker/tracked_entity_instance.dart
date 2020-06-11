@@ -98,15 +98,19 @@ class TrackedEntityInstance {
     if(this.attributes == null){
       this.attributes = new List<Attribute>();
     }
-    bool valueExists = false;
-    this.attributes.forEach((element) {
-      if(element.attribute == attribute){
-        element.value = value;
-        valueExists = true;
+    if(value == null){
+      this.attributes = this.attributes.where((element) => element.attribute != attribute).toList();
+    }else{
+      bool valueExists = false;
+      this.attributes.forEach((element) {
+        if(element.attribute == attribute){
+          element.value = value;
+          valueExists = true;
+        }
+      });
+      if(!valueExists){
+        this.attributes.add(Attribute(attribute: attribute, value: value));
       }
-    });
-    if(!valueExists){
-      this.attributes.add(Attribute(attribute: attribute, value: value));
     }
   }
   TrackedEntityInstance castToTracker(){
@@ -284,7 +288,9 @@ class Geometry {
 
   Geometry.fromJson(Map<String, dynamic> json) {
     type = json['type'];
-    coordinates = json['coordinates'].cast<double>();
+    if(json['coordinates'] != null){
+      coordinates = List<double>.from(json['coordinates']);
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -292,6 +298,14 @@ class Geometry {
     data['type'] = this.type;
     data['coordinates'] = this.coordinates;
     return data;
+  }
+
+  double get latitude{
+    return coordinates.elementAt(1);
+  }
+
+  double get longitude{
+    return coordinates.elementAt(0);
   }
 }
 

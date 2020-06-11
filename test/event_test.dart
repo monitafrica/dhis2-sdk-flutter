@@ -43,6 +43,36 @@ void main() {
 
     expect(newEvent.dataValues != null, true);
   });
+
+  test('Testing Event With Coordinates', () {
+
+    Event event = Event.fromJson({"href":"https://dhis.facility.monitafrica.com/api/events/HQ83CnGtzsi","event":"HQ83CnGtzsi","status":"ACTIVE","program":"iRAGY1xYrFk","programStage":"pZzz8OFJs3w","enrollment":"HSNOkXVN8Jj","enrollmentStatus":"ACTIVE","orgUnit":"VN8Jjz61jOE","orgUnitName":"Aar Health Center","trackedEntityInstance":"HSNOkXVN8Jj","eventDate":"2020-06-10T11:37:35.671","dueDate":"2020-06-10T10:09:21.310","storedBy":"system","dataValues":[{"created":"2020-06-10T08:47:55.374","lastUpdated":"2020-06-10T10:09:21.313","value":"kyz1pUOeNgl","dataElement":"p5SW0c7a8Ka","providedElsewhere":false,"storedBy":"system"},{"created":"2020-06-10T08:47:55.374","lastUpdated":"2020-06-10T10:09:21.313","value":"Yes","dataElement":"xQDDu6SRUi3","providedElsewhere":false,"storedBy":"system"},{"created":"2020-06-10T08:47:55.374","lastUpdated":"2020-06-10T10:09:21.313","value":"DQN00000413","dataElement":"CtJOnujenbE","providedElsewhere":false,"storedBy":"system"},{"created":"2020-06-10T08:47:55.374","lastUpdated":"2020-06-10T10:09:21.313","value":"Do the health service providers assess each woman on arrival and record findings accurately and with completeness ?","dataElement":"kk5V5AUgCcC","providedElsewhere":false,"storedBy":"system"},{"created":null,"lastUpdated":null,"value":"jAR8o5Yp7vW","dataElement":"XhtBxHc8OrO","providedElsewhere":null,"storedBy":null}],"notes":[],"geometry":{"type":"Point","coordinates":[-122.084,37.4219983]},"coordinate":{"latitude":37.4219983,"longitude":-122.084},"deleted":false,"created":"2020-06-10T08:47:55.204","lastUpdated":"2020-06-10T10:09:21.314","createdAtClient":null,"lastUpdatedAtClient":null,"attributeOptionCombo":"HllvX50cXC0","attributeCategoryOptions":"xYerKDKCefk","completedBy":null,"completedDate":null});
+    expect(event.geometry != null, true);
+    expect(event.geometry.type, 'Point');
+    expect(event.geometry.coordinates != null, true);
+    expect(event.geometry.coordinates.length, 2);
+    expect(event.geometry.coordinates.elementAt(0), -122.084);
+    expect(event.geometry.coordinates.elementAt(1), 37.4219983);
+
+    expect(event.coordinate != null, true);
+    expect(event.coordinate.longitude != null, true);
+    expect(event.coordinate.latitude != null, true);
+
+    expect(event.coordinate.longitude, -122.084);
+    expect(event.coordinate.latitude, 37.4219983);
+
+    Map<String, Map<String, dynamic>> userMap = getDBMap<Event>(event);
+
+    expect(userMap['event'] != null, true);
+
+    expect(userMap['event']['geometry'] != null, true);
+    expect(userMap['event']['geometry'] is String, true);
+
+
+    expect(userMap['event']['coordinate'] != null, true);
+    expect(userMap['event']['coordinate'] is String, true);
+
+  });
 }
 
 

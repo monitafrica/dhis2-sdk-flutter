@@ -1,5 +1,6 @@
 
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/modules/tracker/tracked_entity_instance.dart';
 
 @Model
 class OrganisationUnit {
@@ -21,6 +22,8 @@ class OrganisationUnit {
   bool externalAccess;
   String openingDate;
   String dimensionItem;
+  @Column()
+  Geometry geometry;
 
   @Column()
   OrganisationUnit parent;
