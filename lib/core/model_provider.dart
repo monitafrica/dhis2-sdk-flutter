@@ -51,7 +51,6 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
-    print('Download:$url');
     Response<dynamic> response = await this.client.get(url);
     dynamic result = response.data[onlineQuery.endpoint];
     if(onlineQuery.resultField == null){
@@ -59,7 +58,6 @@ class ModelProvider extends ChangeNotifier {
     }else{
       result = response.data[onlineQuery.resultField];
     }
-    print(result);
     if(result is List){
       for(Map<String,dynamic> resultMap in result){
         await save(getObject<T>(resultMap));
@@ -98,7 +96,6 @@ class ModelProvider extends ChangeNotifier {
     }
     parameters += 'paging=false';
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
-    print('From Memory:$url');
     Response<dynamic> response = await this.client.get(url);
     if(onlineQuery.resultField == null){
       return getObject<T>(response.data);
@@ -140,15 +137,6 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
-    print('Upload:$url');
-    dev.log(jsonEncode({
-      onlineQuery.endpoint: entities.map((e){
-        InstanceMirror instanceMirror = Model.reflect(e);
-        Map data = instanceMirror.invoke('toJson',[]);
-        removeNullAndEmptyParams(data);
-        return data;
-      }).toList()
-    }));
     Response<dynamic> response = await this.client.post(url,{
       onlineQuery.endpoint: entities.map((e){
         InstanceMirror instanceMirror = Model.reflect(e);
@@ -195,7 +183,6 @@ class ModelProvider extends ChangeNotifier {
     FormData formData = FormData.fromMap({
       "file": await MultipartFile.fromFile(filePath,filename: dir[dir.length - 1]),
     });
-    print('Upload File:$url');
     Response<dynamic> response = await this.client.post(url,formData);
     return response.data;
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
@@ -203,11 +190,24 @@ class ModelProvider extends ChangeNotifier {
   Future<dynamic> downloadFile(String filePath, String endpoint) async {
     Credential credential = DHIS2.credentials;
     String url = credential.url + '/api/$endpoint';
-    print('Download File:$url');
-    Response response = await this.client.get(url);
+    print(filePath);
+    Response response = await this.client.get(url, options: Options(
+        responseType: ResponseType.bytes,
+        followRedirects: false,
+        validateStatus: (status) {
+          return status < 500;
+        }));
+    print('Here');
+    print(response.data.runtimeType);
     File file = new File(filePath);
-    await file.writeAsBytes(response.data);
-    return response.data;
+    print('Here1');
+    var raf = file.openSync(mode: FileMode.write);
+    print('Here2');
+    // response.data is List<int> type
+    raf.writeFromSync(response.data);
+    await raf.close();
+    //await file.writeAsBytes(response.data);
+    print('Here3');
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
   Future<T> singleDownloadMemory<T>(QueryBuilder queryBuilder) async {
@@ -231,7 +231,6 @@ class ModelProvider extends ChangeNotifier {
       });
     }
     String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters&paging=false';
-    print('Single Download Memory:$url');
     Response<dynamic> response = await this.client.get(url);
     return getObject<T>(response.data);
   }
@@ -463,8 +462,8 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
         } else if (variableMirror.reflectedType.toString().contains("List<")) {
           resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
         }else {
-          print('Not Found:$key');
-          print(variableMirror.reflectedType );
+          //print('Not Found:$key $isKeyFound');
+          //print(variableMirror.reflectedType );
         }
       }
     }

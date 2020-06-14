@@ -9,8 +9,6 @@ class CredentialModel  extends ModelProvider{
   Future<User> loadCredential() async {
     try{
       List<Credential> credentialList = await this.getAll<Credential>();
-      print('credentialList.length');
-      print(credentialList.length);
       if(credentialList.length != 0 ){
         DHIS2.credentials = credentialList.first;
         List<User> users = await DHIS2.User.getAll<User>();

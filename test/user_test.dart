@@ -30,9 +30,6 @@ void main() {
     expect(userMap['user'] != null, true);
     expect(userMap['user']['id'], 'M5zQapPyTZI');
 
-    print("userMap['user']['userCredentials']");
-    print(userMap['user']['userCredentials']);
-    print(userMap['user']['userCredentials'].runtimeType);
     expect(userMap['user']['userCredentials'] != null, true);
     expect(userMap['user']['userCredentials'] is String, true);
 

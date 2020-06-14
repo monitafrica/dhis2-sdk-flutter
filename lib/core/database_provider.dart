@@ -136,6 +136,12 @@ class DatabaseHelper {
     return result.toList();
   }
 
+  Future printTableColumnes(String tablename)async {
+    var dbClient = await db;
+    return await dbClient
+        .rawQuery("PRAGMA table_info($tablename);");
+  }
+
   //Get Items
   Future<List<Map<String, dynamic>>> getOrderdItemsByColumn(String tableName,
       String columName, dynamic value, orderBy, orderType) async {

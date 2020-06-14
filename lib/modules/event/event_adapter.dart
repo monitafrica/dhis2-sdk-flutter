@@ -36,13 +36,7 @@ class EventAdapter{
       return null;
     }
     List<DataValue> dataValues = event.dataValues.where((element) => element.dataElement == dataElement).toList();
-    print('dataValues:');
-    print('Event ID:${event.event}');
-    event.dataValues.forEach((dataValue){
-      print('${dataValue.dataElement}:${dataValue.value}');
-    });
     if(dataValues.length > 0){
-      print('$dataElement:${dataValues.first.value}');
       return dataValues.first.value;
     }else{
       return null;

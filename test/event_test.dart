@@ -30,7 +30,6 @@ void main() {
     expect(userMap['event'] != null, true);
 
     expect(userMap['event']['dataValues'] != null, true);
-    print(userMap['event']['dataValues'].runtimeType);
     expect(userMap['event']['dataValues'].runtimeType, String);
 
     Map<String,List<String>> metadata = getTableColumnDefinitions<Event>();

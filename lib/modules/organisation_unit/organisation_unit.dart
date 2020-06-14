@@ -27,7 +27,6 @@ class OrganisationUnit {
 
   @Column()
   OrganisationUnit parent;
-  List<OrganisationUnit> children;
 
   OrganisationUnit(
       {this.lastUpdated,
@@ -47,8 +46,7 @@ class OrganisationUnit {
         this.externalAccess,
         this.openingDate,
         this.dimensionItem,
-        this.parent,
-        this.children});
+        this.parent});
 
   OrganisationUnit.fromJson(Map<String, dynamic> json) {
     lastUpdated = json['lastUpdated'];
@@ -75,6 +73,10 @@ class OrganisationUnit {
     }
     parent =
     json['parent'] != null ? new OrganisationUnit.fromJson(json['parent']) : null;
+
+    if (json['geometry'] != null) {
+      geometry = Geometry.fromJson(json['geometry']);
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -98,6 +100,9 @@ class OrganisationUnit {
     data['dimensionItem'] = this.dimensionItem;
     if (this.parent != null) {
       data['parent'] = this.parent.toJson();
+    }
+    if (this.geometry != null) {
+      data['geometry'] = this.geometry.toJson();
     }
     return data;
   }

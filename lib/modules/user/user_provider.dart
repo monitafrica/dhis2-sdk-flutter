@@ -18,10 +18,8 @@ class UserModel extends ModelProvider{
         // If the server did return a 200 OK response,
         // then parse the JSON.
         currentUser = User.fromJson(response.data);
-        print('Current User');
         await this.save<User>(currentUser);
         await this.save<Credential>(credentials);
-        print('Current Here');
         return currentUser;
       } else if(response.statusCode == 404){
         // If the server did not return a 200 OK response,

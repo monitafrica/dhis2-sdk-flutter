@@ -282,14 +282,14 @@ class Coordinate {
 @Model
 class Geometry {
   String type;
-  List<double> coordinates;
+  List<dynamic> coordinates;
 
   Geometry({this.type, this.coordinates});
 
   Geometry.fromJson(Map<String, dynamic> json) {
     type = json['type'];
     if(json['coordinates'] != null){
-      coordinates = List<double>.from(json['coordinates']);
+      coordinates = List<dynamic>.from(json['coordinates']);
     }
   }
 
@@ -301,11 +301,18 @@ class Geometry {
   }
 
   double get latitude{
-    return coordinates.elementAt(1);
+    if(type == 'Point'){
+      return coordinates.elementAt(1);
+    }
+    return null;
   }
 
   double get longitude{
-    return coordinates.elementAt(0);
+
+    if(type == 'Point'){
+      return coordinates.elementAt(0);
+    }
+    return null;
   }
 }
 
