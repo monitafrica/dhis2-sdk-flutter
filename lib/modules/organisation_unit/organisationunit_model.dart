@@ -6,6 +6,7 @@ import 'package:dhis2sdk/core/model_provider.dart';
 import 'package:dhis2sdk/core/query_builder.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 import 'package:dhis2sdk/modules/user/credential.dart';
+import 'package:dhis2sdk/modules/user/user.dart';
 import 'package:dio/dio.dart';
 
 class OrganisationUnitModel extends ModelProvider{
@@ -41,9 +42,9 @@ class OrganisationUnitModel extends ModelProvider{
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
   Future<List<OrganisationUnit>> getUserRoots<T>() async {
+    User user = await DHIS2.Credential.loadCredential();
     QueryBuilder queryBuilder = QueryBuilder();
-    //DHIS2.User.currentUser.
-    queryBuilder.filter(Filter(left:"parent",operator: 'null'));
+    queryBuilder.filter(Filter(left:"id",operator: 'in',right: user.organisationUnits.map((e) => e.id)));
     return await getByQuery<OrganisationUnit>(queryBuilder);
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
