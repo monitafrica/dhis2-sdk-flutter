@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/core/utils/date-utils.dart';
 import 'package:dhis2sdk/modules/tracker/tracked_entity_instance.dart';
 
 @Model
@@ -155,35 +156,66 @@ class Event {
     return Event.fromJson(this.toJson());
   }
   getValue(String dataElement){
-    if(this.dataValues == null){
-      return null;
-    }
-    List<DataValue> dataValues = this.dataValues.where((element) => element.dataElement == dataElement).toList();
-    if(dataValues.length > 0){
-      return dataValues[0].value;
+    if(getDataValue(dataElement) != null){
+      return getDataValue(dataElement).value;
     }else{
       return null;
     }
   }
 
   setValue(String dataElement, String value){
+    setDataValue(DataValue(
+      dataElement: dataElement,
+      value: value
+    ));
+  }
+
+  DataValue getDataValue(String dataElement){
+    if(this.dataValues == null){
+      return null;
+    }
+    List<DataValue> dataValues = this.dataValues.where((element) => element.dataElement == dataElement).toList();
+    if(dataValues.length > 0){
+      return dataValues[0];
+    }else{
+      return null;
+    }
+  }
+
+  setDataValue(DataValue dataValue){
     if(this.dataValues == null){
       this.dataValues = new List<DataValue>();
     }
-    if(value == null){
-      this.dataValues = this.dataValues.where((element) => element.dataElement != dataElement).toList();
+    if(dataValue.value == null){
+      this.dataValues = this.dataValues.where((element) => element.dataElement != dataValue.dataElement).toList();
     }else{
       bool valueExists = false;
       this.dataValues.forEach((element) {
-        if(element.dataElement == dataElement){
-          element.value = value;
+        if(element.dataElement == dataValue.dataElement){
+          element.lastUpdated = getCurrentISODate();
+          element.value = dataValue.value;
           valueExists = true;
         }
       });
       if(!valueExists){
-        this.dataValues.add(DataValue(dataElement: dataElement, value: value));
+        dataValue.created = getCurrentISODate();
+        dataValue.lastUpdated = getCurrentISODate();
+        this.dataValues.add(dataValue);
       }
     }
+  }
+  mergeBasedOnLatest(Event otherEvent){
+    otherEvent.dataValues.forEach((otherDataValue) {
+      List<DataValue> filteredDataValues = this.dataValues.where((dataValue) => otherDataValue.dataElement == dataValue.dataElement).toList();
+      if(filteredDataValues.length > 0){
+        if(!(filteredDataValues[0].lastUpdated.compareTo(otherDataValue.lastUpdated) > -1)){
+          filteredDataValues[0].lastUpdated = otherDataValue.lastUpdated;
+          filteredDataValues[0].value = otherDataValue.value;
+        }
+      }else{
+        this.dataValues.add(otherDataValue);
+      }
+    });
   }
 }
 

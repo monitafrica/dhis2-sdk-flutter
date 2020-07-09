@@ -1,5 +1,6 @@
 
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/core/utils/date-utils.dart';
 import 'package:dhis2sdk/modules/event/event.dart';
 
 @Model
@@ -83,35 +84,66 @@ class TrackedEntityInstance {
   }
 
   getValue(String attribute){
+    if(this.getAttributeValue(attribute) == null){
+      return null;
+    } else {
+      return this.getAttributeValue(attribute).value;
+    }
+  }
+
+  setValue(String attribute, String value){
+    this.setAttribute(Attribute(
+      attribute: attribute,
+      value: value,
+      lastUpdated: getCurrentISODate()
+    ));
+  }
+  Attribute getAttributeValue(String attribute){
     if(this.attributes == null){
       return null;
     }
     List<Attribute> attributes = this.attributes.where((element) => element.attribute == attribute).toList();
     if(attributes.length > 0){
-      return attributes.first.value;
+      return attributes.first;
     }else{
       return null;
     }
   }
 
-  setValue(String attribute, String value){
+  setAttribute(Attribute attribute){
     if(this.attributes == null){
       this.attributes = new List<Attribute>();
     }
-    if(value == null){
-      this.attributes = this.attributes.where((element) => element.attribute != attribute).toList();
+    if(attribute.value == null){
+      this.attributes = this.attributes.where((element) => element.attribute != attribute.attribute).toList();
     }else{
       bool valueExists = false;
       this.attributes.forEach((element) {
-        if(element.attribute == attribute){
-          element.value = value;
+        if(element.attribute == attribute.attribute){
+          element.lastUpdated = getCurrentISODate();
+          element.value = attribute.value;
           valueExists = true;
         }
       });
-      if(!valueExists){
-        this.attributes.add(Attribute(attribute: attribute, value: value));
+      if(!valueExists) {
+        attribute.created = getCurrentISODate();
+        attribute.lastUpdated = getCurrentISODate();
+        this.attributes.add(attribute);
       }
     }
+  }
+  mergeBasedOnLatest(TrackedEntityInstance otherInstance){
+    otherInstance.attributes.forEach((otherAttribute) {
+      List<Attribute> filteredAttributes = this.attributes.where((attribute) => otherAttribute.attribute == attribute.attribute).toList();
+      if(filteredAttributes.length > 0){
+        if(!(filteredAttributes[0].lastUpdated.compareTo(otherAttribute.lastUpdated) > -1)){
+          filteredAttributes[0].lastUpdated = otherAttribute.lastUpdated;
+          filteredAttributes[0].value = otherAttribute.value;
+        }
+      }else{
+        this.attributes.add(otherAttribute);
+      }
+    });
   }
   TrackedEntityInstance castToTracker(){
     return TrackedEntityInstance.fromJson(this.toJson());
