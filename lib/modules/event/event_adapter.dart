@@ -14,10 +14,8 @@ class EventAdapter{
   final Event event;
 
   EventAdapter(this.event){
-    //print(this.runtimeType);
     ClassMirror classMirror = Model.reflectType(this.runtimeType);
     InstanceMirror instanceMirror = Model.reflect(this);
-    //instanceMirror.invokeSetter(setterName, value)
     for (String key in classMirror.declarations.keys) {
       var value = classMirror.declarations[key];
       if (value is VariableMirror) {

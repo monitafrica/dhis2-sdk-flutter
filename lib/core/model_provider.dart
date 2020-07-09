@@ -108,9 +108,6 @@ class ModelProvider extends ChangeNotifier {
     ClassMirror classMirror = Model.reflectType(T);
     SelectQuery selectQuery = queryBuilder.getQueryStructure();
     List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
-    results.forEach((element) {
-      dev.log(jsonEncode(element));
-    });
     List<T> entities = results.map((e) {
       return getObject<T>(e);
     }).toList();
@@ -152,28 +149,6 @@ class ModelProvider extends ChangeNotifier {
       await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: false);
     }
     return response.data;
-    /*try{
-      Response<dynamic> response = await this.client.post(url,{
-        onlineQuery.endpoint: entities.map((e){
-          InstanceMirror instanceMirror = Model.reflect(e);
-          Map data = instanceMirror.invoke('toJson',[]);
-          removeNullAndEmptyParams(data);
-          return data;
-        }).toList()
-      });
-
-      String key = getPrimaryKey<T>();
-      for(T model in entities){
-        InstanceMirror instanceMirror = Model.reflect(model);
-        await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: false);
-      }
-      return response.data;
-    } on DioError catch(e){
-      //e.
-      //print(e.response);
-      throw e;
-    }*/
-    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
 
   Future<dynamic> uploadFile(String filePath) async {
@@ -190,25 +165,16 @@ class ModelProvider extends ChangeNotifier {
   Future<dynamic> downloadFile(String filePath, String endpoint) async {
     Credential credential = DHIS2.credentials;
     String url = credential.url + '/api/$endpoint';
-    print(filePath);
     Response response = await this.client.get(url, options: Options(
         responseType: ResponseType.bytes,
         followRedirects: false,
         validateStatus: (status) {
           return status < 500;
         }));
-    print('Here');
-    print(response.data.runtimeType);
     File file = new File(filePath);
-    print('Here1');
     var raf = file.openSync(mode: FileMode.write);
-    print('Here2');
-    // response.data is List<int> type
     raf.writeFromSync(response.data);
     await raf.close();
-    //await file.writeAsBytes(response.data);
-    print('Here3');
-    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
   Future<T> singleDownloadMemory<T>(QueryBuilder queryBuilder) async {
     Credential credential = DHIS2.credentials;

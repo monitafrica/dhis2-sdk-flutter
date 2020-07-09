@@ -11,27 +11,6 @@ class AttributeField {
 
 class TrackerAdapter extends TrackedEntityInstance{
 
-  //final TrackedEntityInstance trackedEntityInstance;
-
-  /*TrackerAdapter(){
-    //this.frtrackedEntityInstance.toJson()
-    //print(this.runtimeType);
-    ClassMirror classMirror = Model.reflectType(this.runtimeType);
-    InstanceMirror instanceMirror = Model.reflect(this);
-    //instanceMirror.invokeSetter(setterName, value)
-    for (String key in classMirror.declarations.keys) {
-      var value = classMirror.declarations[key];
-      if (value is VariableMirror) {
-        VariableMirror variableMirror = value;
-        variableMirror.metadata.forEach((element) {
-          if (element is AttributeField) {
-            instanceMirror.invokeSetter(variableMirror.simpleName, getValue(element.fieldId));
-          }
-        });
-      }
-    }
-  }*/
-
   getValue(String attribute){
     if(this.attributes == null){
       return null;
