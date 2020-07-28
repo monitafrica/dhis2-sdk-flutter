@@ -106,6 +106,7 @@ class ModelProvider extends ChangeNotifier {
 
   Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
     ClassMirror classMirror = Model.reflectType(T);
+    //queryBuilder.filter(Filter(left:'isDirty',operator: '==',right: true));
     SelectQuery selectQuery = queryBuilder.getQueryStructure();
     List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
     List<T> entities = results.map((e) {
@@ -147,6 +148,7 @@ class ModelProvider extends ChangeNotifier {
     for(T model in entities){
       InstanceMirror instanceMirror = Model.reflect(model);
       await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: false);
+      List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
     }
     return response.data;
   }

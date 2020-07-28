@@ -205,6 +205,9 @@ class Event {
     }
   }
   mergeBasedOnLatest(Event otherEvent){
+    if(!(lastUpdated.compareTo(otherEvent.lastUpdated) > -1)){
+      status = otherEvent.status;
+    }
     otherEvent.dataValues.forEach((otherDataValue) {
       List<DataValue> filteredDataValues = this.dataValues.where((dataValue) => otherDataValue.dataElement == dataValue.dataElement).toList();
       if(filteredDataValues.length > 0){
@@ -216,6 +219,9 @@ class Event {
         this.dataValues.add(otherDataValue);
       }
     });
+  }
+  bool sameAs(Event otherEvent){
+    return this.event == otherEvent.event;
   }
 }
 
