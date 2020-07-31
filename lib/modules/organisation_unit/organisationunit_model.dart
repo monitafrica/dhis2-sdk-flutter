@@ -44,7 +44,6 @@ class OrganisationUnitModel extends ModelProvider{
   Future<List<OrganisationUnit>> getUserRoots<T>() async {
     User user = await DHIS2.Credential.loadCredential();
     QueryBuilder queryBuilder = QueryBuilder();
-    print(user.organisationUnits);
     queryBuilder.filter(Filter(left:"id",operator: 'in',right: user.organisationUnits.map((e) => e.id)));
     return await getByQuery<OrganisationUnit>(queryBuilder);
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());

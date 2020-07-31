@@ -15,7 +15,7 @@ class CredentialModel  extends ModelProvider{
         return users.first;
       }
     }catch(e, s){
-      //print(e);
+
     } finally {
       finishedInitialize();
     }
