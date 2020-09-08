@@ -13,6 +13,7 @@ dependencies:
   sqflite:
   path_provider:
   reflectable: ^2.2.4
+  intl: any
   http:
   dio: ^3.0.8
   shared_preferences: ^0.5.6
