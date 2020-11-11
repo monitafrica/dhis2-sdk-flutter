@@ -154,4 +154,31 @@ class DatastoreAdapterModel extends ModelProvider{
     });
     return results;
   }
+
+  Future<dynamic> saveToDataStore<T>(String namespace, String key, value) async {
+    Credential credential = DHIS2.credentials;
+    this.initialize<T>();
+    // ClassMirror classMirror = Model.reflectType(dataStoreAdapterType);
+    // DatastoreAdapter dataStoreAdapter = classMirror.newInstance("",[]);
+    print('Call is made with $namespace');
+    Response<dynamic> response = await this.client.post(credential.url + '/api/dataStore/$namespace/$key', value);
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print('Data served successful');
+
+    } else if(response.statusCode == 404){
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Server ${credential.url} Not Found');
+    } else if(response.statusCode == 409) {
+      throw Exception('The data key already exist');
+    }else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to save data');
+    }
+    notifyListeners();
+  }
 }
