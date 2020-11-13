@@ -154,4 +154,32 @@ class DatastoreAdapterModel extends ModelProvider{
     });
     return results;
   }
+  Future<dynamic> uploadDataStore<T>(String namespace) async {
+    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere('datastore',[],[
+      "namespace='$namespace'",
+      "isdirty=1"
+    ]);
+    List<DataStore> entities = results.map((e) {
+      return getObject<DataStore>(e);
+    }).toList();
+    if(entities.length == 0){
+      return {};
+    }
+    Credential credential = DHIS2.credentials;
+    List<Future<Response<dynamic>>> repsonseFutures = entities.map((element) {
+      String url = credential.url + '/api/datastore/$namespace/${element.key}';
+
+      return this.client.post(url,element.value);
+    });
+
+    List<Response<dynamic>> responses = await Future.wait(repsonseFutures);
+    /*
+    TODO make sure you update local data
+    for(T model in responses){
+      InstanceMirror instanceMirror = Model.reflect(model);
+      await update<DataStore>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: false);
+      List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
+    }*/
+    return entities;
+  }
 }
