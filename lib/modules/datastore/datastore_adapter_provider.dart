@@ -23,7 +23,7 @@ class DatastoreAdapterModel extends ModelProvider{
     DatastoreAdapter dataStoreAdapter = classMirror.newInstance("",[]);
     //this.client.get(config.url + '/api/dataStore/${dataStoreAdapter.namespace}/${dataStoreAdapter.key}/metaData').t
     Response<dynamic> response = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}');
-
+    
     for(String key in response.data){
       Response<dynamic> dataResponse = await this.client.get(credential.url + '/api/dataStore/${dataStoreAdapter.namespace}/$key/metaData');
       await this.save<DataStore>(DataStore.fromJson(dataResponse.data));
@@ -162,11 +162,11 @@ class DatastoreAdapterModel extends ModelProvider{
     // DatastoreAdapter dataStoreAdapter = classMirror.newInstance("",[]);
     print('Call is made with $namespace');
     Response<dynamic> response = await this.client.post(credential.url + '/api/dataStore/$namespace/$key', value);
-
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
       print('Data served successful');
+      return response;
 
     } else if(response.statusCode == 404){
       // If the server did not return a 200 OK response,
