@@ -137,7 +137,6 @@ class DatastoreAdapterModel extends ModelProvider{
     }).map((element) {
       return getObject<T>(jsonDecode(element.value));
     }).toList();
-    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
   Future<List<T>> getAll<T>() async{
     ClassMirror classMirror = Model.reflectType(T);
