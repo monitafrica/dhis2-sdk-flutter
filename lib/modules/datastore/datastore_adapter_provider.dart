@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dhis2sdk/core/dhis2.dart';
 import 'package:dhis2sdk/core/model.dart';
+import 'package:dhis2sdk/core/utils/date-utils.dart';
 import 'package:dhis2sdk/core/model_provider.dart';
 import 'package:dhis2sdk/core/query_builder.dart';
 import 'package:dhis2sdk/modules/datastore/datastore.dart';
@@ -155,30 +156,102 @@ class DatastoreAdapterModel extends ModelProvider{
     return results;
   }
 
-  Future<dynamic> saveToDataStore<T>(String namespace, String key, value) async {
-    Credential credential = DHIS2.credentials;
-    this.initialize<T>();
-    // ClassMirror classMirror = Model.reflectType(dataStoreAdapterType);
-    // DatastoreAdapter dataStoreAdapter = classMirror.newInstance("",[]);
-    print('Call is made with $namespace');
-    Response<dynamic> response = await this.client.post(credential.url + '/api/dataStore/$namespace/$key', value);
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      print('Data served successful');
-      return response;
+  DataStore createNewDataStoreObject(Map<String, dynamic> object, String namespace) {
+    final String id = object['id'];
+    final String value = jsonEncode(object);
+    final DataStore dataStore = DataStore(
+      id: id,
+      key: id,
+      value: value,
+      namespace: namespace,
+      lastUpdated: getCurrentISODate(),
+    );
 
-    } else if(response.statusCode == 404){
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Server ${credential.url} Not Found');
-    } else if(response.statusCode == 409) {
-      throw Exception('The data key already exist');
-    }else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to save data');
+    return dataStore;
+  }
+
+  Future<dynamic> saveToDataStore2(Map<String, dynamic> object, String namespace, {isDirty: false}) async {
+   Map<String, dynamic> data = createNewDataStoreObject(object, namespace).toJson();
+   try{
+     data['isDirty'] = isDirty;
+     await dbClient.saveItemMap('datastore', data);
+     print('Done saving new gap');
+   }catch(e,s){
+     print('Error is $e');
+     if((e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id'))){
+       String key = 'id';
+       String criteria = "$key = '${data[key]}'";
+       print('Criteria: $criteria');
+       await dbClient.updateItemMap('datastore', criteria, data);
+     }else{
+       throw(e);
+     }
+   }
+
+    return object;
+  }
+
+  Future<T> save<T>(T model,{isDirty = false}) async {
+    Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
+    for(String key in results.keys){
+      try{
+        results[key]['isdirty'] = isDirty;
+        // dev.inspect(results);
+        await dbClient.saveItemMap(key, results[key]);
+      }catch(e,s){
+        if(e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id')){
+          String key = getPrimaryKey<T>();
+          InstanceMirror instanceMirror = Model.reflect(model);
+          await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: isDirty);
+        }else{
+          throw(e);
+        }
+      }
     }
-    notifyListeners();
+    return model;
+  }
+
+  Future<dynamic> uploadToDataStore(String namespace) async {
+    QueryBuilder queryBuilder = QueryBuilder();
+    queryBuilder.filter(Filter(left:'namespace',operator: '==',right: namespace));
+    queryBuilder.filter(Filter(left:'isdirty',operator: '==',right: true));
+    SelectQuery selectQuery = queryBuilder.getQueryStructure();
+    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere('datastore',selectQuery.fields,selectQuery.where);
+    if(results.length == 0){
+      return {};
+    }
+    Credential credential = DHIS2.credentials;
+    for (var i = 0; i < results.length; i++) {
+      Map<String, dynamic> data = results[i];
+      String keyLabel = 'id';
+      String namespace = data['namespace'];
+      String key = data[keyLabel];
+      String value = data['value'];
+
+      String url = credential.url + '/api/dataStore/$namespace/$key';
+      try{
+        await this.client.post(url, jsonDecode(value));
+        Map<String, dynamic> newData = Map<String, dynamic>.from(data);
+        String criteria = " $keyLabel = '${newData[keyLabel]}'";
+        newData['isDirty'] = false;
+        await dbClient.updateItemMap('datastore', criteria, newData);
+      } catch (e) {
+        if(e is DioError) {
+          DioError dioError = e as DioError;
+          String message = dioError.response != null && dioError.response.data != null ? dioError.response.data['message']: '';
+          if(message.contains('already exists on the namespace')) {
+            await this.client.put(url, jsonDecode(value));
+            Map<String, dynamic> newData = Map<String, dynamic>.from(data);
+            String criteria = " $keyLabel = '${newData[keyLabel]}'";
+            newData['isDirty'] = false;
+            await dbClient.updateItemMap('datastore', criteria, newData);
+          } else {
+            throw(e);
+          }
+        }
+      }
+    }
+
+    return null;
   }
 }

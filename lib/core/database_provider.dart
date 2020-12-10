@@ -89,7 +89,7 @@ class DatabaseHelper {
   }
 
   //Insertion
-  Future<int> saveItemMap(String tableName, values) async {
+  Future<int> saveItemMap(String tableName, Map<String, dynamic> values) async {
     var dbClient = await db;
     return await dbClient.insert(tableName,values);
   }
