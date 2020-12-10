@@ -169,45 +169,33 @@ class DatastoreAdapterModel extends ModelProvider{
     return dataStore;
   }
 
-  Future<dynamic> saveToDataStore2(Map<String, dynamic> object, String namespace, {isDirty: false}) async {
+  Future<dynamic> saveToDataStore(Map<String, dynamic> object, String namespace, {isDirty: false}) async {
    Map<String, dynamic> data = createNewDataStoreObject(object, namespace).toJson();
    try{
      data['isDirty'] = isDirty;
      await dbClient.saveItemMap('datastore', data);
-     print('Done saving new gap');
    }catch(e,s){
      print('Error is $e');
      if((e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id'))){
-       String key = 'id';
-       String criteria = "$key = '${data[key]}'";
-       print('Criteria: $criteria');
-       await dbClient.updateItemMap('datastore', criteria, data);
+       await updateToDataStore(object, namespace, isDirty: isDirty);
      }else{
        throw(e);
      }
    }
-
     return object;
   }
 
-  Future<T> save<T>(T model,{isDirty = false}) async {
-    Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
-    for(String key in results.keys){
-      try{
-        results[key]['isdirty'] = isDirty;
-        // dev.inspect(results);
-        await dbClient.saveItemMap(key, results[key]);
-      }catch(e,s){
-        if(e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id')){
-          String key = getPrimaryKey<T>();
-          InstanceMirror instanceMirror = Model.reflect(model);
-          await update<T>(model, "$key ='${instanceMirror.invokeGetter(key)}'",isDirty: isDirty);
-        }else{
-          throw(e);
-        }
-      }
+  Future<dynamic> updateToDataStore(Map<String, dynamic> object, String namespace, {isDirty: false}) async {
+    try{
+      Map<String, dynamic> data = object;
+      data['isDirty'] = isDirty;
+      String key = 'id';
+      String criteria = "$key = '${data[key]}'";
+      await dbClient.updateItemMap('datastore', criteria, data);
+    } catch (e) {
+      throw(e);
     }
-    return model;
+    return object;
   }
 
   Future<dynamic> uploadToDataStore(String namespace) async {
