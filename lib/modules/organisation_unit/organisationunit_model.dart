@@ -48,11 +48,15 @@ class OrganisationUnitModel extends ModelProvider{
     return await getByQuery<OrganisationUnit>(queryBuilder);
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
-  Future<List<OrganisationUnit>> getChildren(String parentId) async {
-    QueryBuilder queryBuilder = QueryBuilder();
-    queryBuilder.filter(Filter(left:"parent",operator: 'like', right: '%' + parentId + '%'));
-    return await getByQuery<OrganisationUnit>(queryBuilder);
-    //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+  Future<List<OrganisationUnit>> getChildren(String parentId, {int level}) async {
+    List<OrganisationUnit> rtns = [];
+    if(level != 4 || level == null) {
+      QueryBuilder queryBuilder = QueryBuilder();
+      queryBuilder.filter(Filter(left:"parent",operator: 'like', right: '%' + parentId + '%'));
+      rtns = await getByQuery<OrganisationUnit>(queryBuilder);
+      //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
+    }
+    return rtns;
   }
 
   Future<OrganisationUnit> getById(String id) async {

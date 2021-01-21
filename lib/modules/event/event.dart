@@ -211,7 +211,9 @@ class Event {
     otherEvent.dataValues.forEach((otherDataValue) {
       List<DataValue> filteredDataValues = this.dataValues.where((dataValue) => otherDataValue.dataElement == dataValue.dataElement).toList();
       if(filteredDataValues.length > 0){
-        if(!(filteredDataValues[0].lastUpdated.compareTo(otherDataValue.lastUpdated) > -1)){
+        final DateTime localLastUpdated = DateTime.parse(filteredDataValues[0].lastUpdated);
+        final DateTime onlineLastUpdated = DateTime.parse(otherDataValue.lastUpdated);
+        if(onlineLastUpdated.isAfter(localLastUpdated)) {
           filteredDataValues[0].lastUpdated = otherDataValue.lastUpdated;
           filteredDataValues[0].value = otherDataValue.value;
         }

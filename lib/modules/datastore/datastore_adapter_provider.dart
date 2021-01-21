@@ -177,7 +177,7 @@ class DatastoreAdapterModel extends ModelProvider{
    }catch(e,s){
      print('Error is $e');
      if((e.message.contains('UNIQUE constraint failed') || e.message.contains('no such column: id'))){
-       await updateToDataStore(object, namespace, isDirty: isDirty);
+       await updateToDataStore(object, namespace, isDirty: isDirty, formted: true);
      }else{
        throw(e);
      }
@@ -185,10 +185,12 @@ class DatastoreAdapterModel extends ModelProvider{
     return object;
   }
 
-  Future<dynamic> updateToDataStore(Map<String, dynamic> object, String namespace, {isDirty: false}) async {
+  Future<dynamic> updateToDataStore(Map<String, dynamic> object, String namespace, {isDirty: false, formted: false}) async {
     try{
-      Map<String, dynamic> data = object;
-      data['isDirty'] = isDirty;
+      Map<String, dynamic> data = formted? object: createNewDataStoreObject(object, namespace).toJson();
+      if(!formted) {
+        data['isDirty'] = isDirty;
+      }
       String key = 'id';
       String criteria = "$key = '${data[key]}'";
       await dbClient.updateItemMap('datastore', criteria, data);

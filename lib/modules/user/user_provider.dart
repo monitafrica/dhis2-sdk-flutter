@@ -13,7 +13,8 @@ class UserModel extends ModelProvider{
     Credential credentials = DHIS2.credentials;
 
     try{
-      Response<dynamic> response = await this.client.get(credentials.url + '/api/me');
+      final String _userFields = 'id,name,displayName,created,lastUpdated,email,firstName,surname,phoneNumber,userGroups[id,name],dataViewOrganisationUnits[id,name,level,parent[id,name]],organisationUnits[id,name,level,parent[id,name]],userCredentials[id,username,disabled,userRoles[id,name,authorities]],attributeValues';
+      Response<dynamic> response = await this.client.get(credentials.url + '/api/me.json?fields=$_userFields');
       if (response.statusCode == 200) {
         // If the server did return a 200 OK response,
         // then parse the JSON.
