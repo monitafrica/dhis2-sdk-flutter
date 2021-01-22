@@ -53,6 +53,9 @@ class OrganisationUnitModel extends ModelProvider{
     if(level != 4 || level == null) {
       QueryBuilder queryBuilder = QueryBuilder();
       queryBuilder.filter(Filter(left:"parent",operator: 'like', right: '%' + parentId + '%'));
+      if(level != null) {
+        queryBuilder.filter(Filter(left:"level",operator: '=', right: level + 1));
+      }
       rtns = await getByQuery<OrganisationUnit>(queryBuilder);
       //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
     }
