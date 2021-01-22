@@ -136,8 +136,13 @@ class TrackedEntityInstance {
     otherInstance.attributes.forEach((otherAttribute) {
       List<Attribute> filteredAttributes = this.attributes.where((attribute) => otherAttribute.attribute == attribute.attribute).toList();
       if(filteredAttributes.length > 0){
-        final DateTime localLastUpdated = DateTime.parse(filteredAttributes.first.lastUpdated);
-        final DateTime onlineLastUpdated = DateTime.parse(otherAttribute.lastUpdated);
+        String onlineD = otherAttribute.lastUpdated;
+        int fIndex = onlineD.length -1;
+        if(onlineD[fIndex] != 'Z') {
+          onlineD += 'Z';
+        }
+        DateTime localLastUpdated = DateTime.parse(filteredAttributes.first.lastUpdated);
+        final DateTime onlineLastUpdated = DateTime.parse(onlineD);
         if(onlineLastUpdated.isAfter(localLastUpdated)) {
           filteredAttributes[0].lastUpdated = otherAttribute.lastUpdated;
           filteredAttributes[0].value = otherAttribute.value;

@@ -6,7 +6,8 @@ String getISODate(DateTime date){
   return '${date.toIso8601String().substring(0,23)}Z';
 }
 String getCurrentISODate(){
-  return getISODate(DateTime.now());
+  final DateTime _today = DateTime.now().subtract(Duration(hours: 3));
+  return getISODate(_today);
 }
 String formatTimeOfDay(TimeOfDay timeOfDay) {
   final now = new DateTime.now();
