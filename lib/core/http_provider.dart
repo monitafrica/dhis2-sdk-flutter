@@ -26,7 +26,7 @@ class DHISHttpClient {
         HttpHeaders.userAgentHeader: "dio",
         "api": "1.0.0",
         HttpHeaders.authorizationHeader: token,
-        "Content-Type": 'application/json',
+        // "Content-Type": 'application/json',
       },
       contentType: 'application/json',
       responseType: ResponseType.json,
