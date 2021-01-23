@@ -76,3 +76,14 @@ class DHISHttpClient {
     prefs.setString('tulonge_user_token', token);
   }
 }
+
+class DHIS2ImportsSummary {
+  String responseType;
+  String status;
+  Map<String, int> importCount;
+  String reference;
+  String href;
+  String description;
+
+  DHIS2ImportsSummary(this.responseType, this.status, this.importCount, this.reference, this.href, this.description);
+}
