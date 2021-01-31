@@ -106,21 +106,23 @@ class ModelProvider extends ChangeNotifier {
 
 
   Future<Null> handleDHIS2UploadError<T>(DioError e) async{
-    final int code = e.response.data['httpStatusCode'];
-    final String httpStatus = e.response.data['httpStatus'];
-    final String status = e.response.data['status'];
-    List<Map<String, dynamic>> summaries;
-    if(status == 'ERROR' && httpStatus == 'Conflict' && code == 409) {
-      summaries = List<Map<String, dynamic>>.from(e.response.data['response']['importSummaries']);
-    }
-    if(summaries != null && summaries.length > 0) {
-      for(Map<String, dynamic> summary in summaries) {
-        if(summary['status'] == 'ERROR' && summary['description'] != null && summary['description'].contains('was already used')) {
-          final ClassMirror classMirror = Model.reflectType(T);
-          final String tableName = classMirror.simpleName.toLowerCase();
-          final String id = summary['reference'];
-          final String pKey = getPrimaryKey<T>();
-          await this.dbClient.deleteItemByColumn(tableName, pKey, id);
+    if(e.response != null) {
+      final int code = e.response.data['httpStatusCode'];
+      final String httpStatus = e.response.data['httpStatus'];
+      final String status = e.response.data['status'];
+      List<Map<String, dynamic>> summaries;
+      if(status == 'ERROR' && httpStatus == 'Conflict' && code == 409) {
+        summaries = List<Map<String, dynamic>>.from(e.response.data['response']['importSummaries']);
+      }
+      if(summaries != null && summaries.length > 0) {
+        for(Map<String, dynamic> summary in summaries) {
+          if(summary['status'] == 'ERROR' && summary['description'] != null && summary['description'].contains('was already used')) {
+            final ClassMirror classMirror = Model.reflectType(T);
+            final String tableName = classMirror.simpleName.toLowerCase();
+            final String id = summary['reference'];
+            final String pKey = getPrimaryKey<T>();
+            await this.dbClient.deleteItemByColumn(tableName, pKey, id);
+          }
         }
       }
     }
