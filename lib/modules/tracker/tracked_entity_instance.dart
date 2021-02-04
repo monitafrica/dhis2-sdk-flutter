@@ -220,6 +220,7 @@ class Enrollment {
   Coordinate coordinate;
   Geometry geometry;
   List<Note> notes;
+  List<dynamic> events;
 
   Enrollment(
       {this.storedBy,
@@ -237,6 +238,7 @@ class Enrollment {
         this.deleted,
         this.incidentDate,
         this.status,
+        this.events,
         this.notes});
 
   Enrollment.fromJson(Map<String, dynamic> json) {
@@ -252,6 +254,7 @@ class Enrollment {
     lastUpdatedAtClient = json['lastUpdatedAtClient'];
     orgUnitName = json['orgUnitName'];
     enrollmentDate = json['enrollmentDate'];
+    events=json['events'];
     deleted = json['deleted'];
     incidentDate = json['incidentDate'];
     status = json['status'];
@@ -286,6 +289,7 @@ class Enrollment {
     data['deleted'] = this.deleted;
     data['incidentDate'] = this.incidentDate;
     data['status'] = this.status;
+    data['events'] = this.events;
     if (this.notes != null) {
       data['notes'] = this.notes.map((v) => v.toJson()).toList();
     }
