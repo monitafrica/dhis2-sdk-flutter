@@ -128,7 +128,13 @@ class ModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> saveOnline<T>(QueryBuilder queryBuilder, List<T> entities ) async {
+  Future<dynamic> saveOnline<T>(QueryBuilder queryBuilder, List<Map<String, dynamic>> results ) async {
+     List<T> entities = results.map((e) {
+      return getObject<T>(e);
+    }).toList();
+    if(entities.length == 0){
+      return {};
+    }
     Credential credential = DHIS2.credentials;
     OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
     String parameters = '';
@@ -168,13 +174,8 @@ class ModelProvider extends ChangeNotifier {
     SelectQuery selectQuery = queryBuilder.getQueryStructure();
     await _delete<T>(queryBuilder);
     List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
-    List<T> entities = results.map((e) {
-      return getObject<T>(e);
-    }).toList();
-    if(entities.length == 0){
-      return {};
-    }
-    Response<dynamic> response = await saveOnline<T>(queryBuilder, entities);
+   
+    Response<dynamic> response = await saveOnline<T>(queryBuilder, results);
 
     String key = getPrimaryKey<T>();
     for(T model in entities){
