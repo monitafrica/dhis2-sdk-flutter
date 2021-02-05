@@ -128,18 +128,7 @@ class ModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
-    ClassMirror classMirror = Model.reflectType(T);
-    // queryBuilder.filter(Filter(left:'isDirty',operator: '==',right: true));
-    SelectQuery selectQuery = queryBuilder.getQueryStructure();
-    await _delete<T>(queryBuilder);
-    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
-    List<T> entities = results.map((e) {
-      return getObject<T>(e);
-    }).toList();
-    if(entities.length == 0){
-      return {};
-    }
+  Future<dynamic> saveOnline<T>(QueryBuilder queryBuilder, List<T> entities ) async {
     Credential credential = DHIS2.credentials;
     OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
     String parameters = '';
@@ -169,6 +158,23 @@ class ModelProvider extends ChangeNotifier {
       }).toList()
     };
     Response<dynamic> response = await this.client.post(url, payload);
+
+    return response;
+  }
+
+  Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
+    ClassMirror classMirror = Model.reflectType(T);
+    // queryBuilder.filter(Filter(left:'isDirty',operator: '==',right: true));
+    SelectQuery selectQuery = queryBuilder.getQueryStructure();
+    await _delete<T>(queryBuilder);
+    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
+    List<T> entities = results.map((e) {
+      return getObject<T>(e);
+    }).toList();
+    if(entities.length == 0){
+      return {};
+    }
+    Response<dynamic> response = await saveOnline<T>(queryBuilder, entities);
 
     String key = getPrimaryKey<T>();
     for(T model in entities){
