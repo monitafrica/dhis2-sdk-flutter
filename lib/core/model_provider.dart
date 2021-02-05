@@ -128,7 +128,19 @@ class ModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> saveOnline<T>(QueryBuilder queryBuilder, List<T> entities ) async {
+  Future<dynamic> saveOnline<T>(QueryBuilder queryBuilder, T model ) async {
+    Map<String, Map<String, dynamic>> results = getDBMap<T>(model);
+    final List<dynamic> newResults = [];
+    for(String key in results.keys){
+      newResults.add(results[key]);
+    }
+
+    List<T> entities = newResults.map((e) {
+      return getObject<T>(e);
+    }).toList();
+    if(entities.length == 0){
+      return {};
+    }
     Credential credential = DHIS2.credentials;
     OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
     String parameters = '';
@@ -174,7 +186,35 @@ class ModelProvider extends ChangeNotifier {
     if(entities.length == 0){
       return {};
     }
-    Response<dynamic> response = await saveOnline<T>(queryBuilder, entities);
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String parameters = '';
+    if(onlineQuery.fields != null){
+      if(parameters==''){
+        parameters += '?';
+      }
+      parameters += 'fields=${onlineQuery.fields}';
+    }
+    if(onlineQuery.parameters != null){
+      onlineQuery.parameters.forEach((key, value) {
+        if(parameters==''){
+          parameters += '?';
+        }else{
+          parameters += '&';
+        }
+        parameters += '$key=$value';
+      });
+    }
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json?$parameters';
+    final payload = {
+      onlineQuery.endpoint: entities.map((e){
+        InstanceMirror instanceMirror = Model.reflect(e);
+        Map data = instanceMirror.invoke('toJson',[]);
+        removeNullAndEmptyParams(data);
+        return data;
+      }).toList()
+    };
+    Response<dynamic> response = await this.client.post(url, payload);
 
     String key = getPrimaryKey<T>();
     for(T model in entities){
