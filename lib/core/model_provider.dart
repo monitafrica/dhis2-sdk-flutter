@@ -104,17 +104,31 @@ class ModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
-    ClassMirror classMirror = Model.reflectType(T);
-    //queryBuilder.filter(Filter(left:'isDirty',operator: '==',right: true));
-    SelectQuery selectQuery = queryBuilder.getQueryStructure();
-    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
-    List<T> entities = results.map((e) {
-      return getObject<T>(e);
-    }).toList();
-    if(entities.length == 0){
-      return {};
+
+  Future<Null> handleDHIS2UploadError<T>(DioError e) async{
+    if(e.response != null) {
+      final int code = e.response.data['httpStatusCode'];
+      final String httpStatus = e.response.data['httpStatus'];
+      final String status = e.response.data['status'];
+      List<Map<String, dynamic>> summaries;
+      if(status == 'ERROR' && httpStatus == 'Conflict' && code == 409) {
+        summaries = List<Map<String, dynamic>>.from(e.response.data['response']['importSummaries']);
+      }
+      if(summaries != null && summaries.length > 0) {
+        for(Map<String, dynamic> summary in summaries) {
+          if(summary['status'] == 'ERROR' && summary['description'] != null && summary['description'].contains('was already used')) {
+            final ClassMirror classMirror = Model.reflectType(T);
+            final String tableName = classMirror.simpleName.toLowerCase();
+            final String id = summary['reference'];
+            final String pKey = getPrimaryKey<T>();
+            await this.dbClient.deleteItemByColumn(tableName, pKey, id);
+          }
+        }
+      }
     }
+  }
+
+  Future<dynamic> saveOnline<T>(QueryBuilder queryBuilder, List<T> entities ) async {
     Credential credential = DHIS2.credentials;
     OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
     String parameters = '';
@@ -134,7 +148,7 @@ class ModelProvider extends ChangeNotifier {
         parameters += '$key=$value';
       });
     }
-    String url = credential.url + '/api/${onlineQuery.endpoint}.json$parameters';
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json?$parameters';
     final payload = {
       onlineQuery.endpoint: entities.map((e){
         InstanceMirror instanceMirror = Model.reflect(e);
@@ -145,6 +159,23 @@ class ModelProvider extends ChangeNotifier {
     };
     Response<dynamic> response = await this.client.post(url, payload);
 
+    return response;
+  }
+
+  Future<dynamic> upload<T>(QueryBuilder queryBuilder) async {
+    ClassMirror classMirror = Model.reflectType(T);
+    // queryBuilder.filter(Filter(left:'isDirty',operator: '==',right: true));
+    SelectQuery selectQuery = queryBuilder.getQueryStructure();
+    await _delete<T>(queryBuilder);
+    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
+    List<T> entities = results.map((e) {
+      return getObject<T>(e);
+    }).toList();
+    if(entities.length == 0){
+      return {};
+    }
+    Response<dynamic> response = await saveOnline<T>(queryBuilder, entities);
+
     String key = getPrimaryKey<T>();
     for(T model in entities){
       InstanceMirror instanceMirror = Model.reflect(model);
@@ -154,10 +185,34 @@ class ModelProvider extends ChangeNotifier {
     return response.data;
   }
 
-  // void printWrapped(String text) {
-  //   final pattern = RegExp('.{1,800}'); // 800 is the size of each chunk
-  //   pattern.allMatches(text).forEach((match) => print(match.group(0)));
-  // }
+  Future<dynamic> _delete<T>(QueryBuilder queryBuilder) async {
+    String strategy = "strategy=DELETE";
+    ClassMirror classMirror = Model.reflectType(T);
+    queryBuilder.filter(Filter(left:'deleted',operator: '==',right: true));
+    SelectQuery selectQuery = queryBuilder.getQueryStructure();
+    final String key = getPrimaryKey<T>();
+    List<Map<String, dynamic>> results = await dbClient.getItemsByFieldsAndWhere(classMirror.simpleName.toLowerCase(),selectQuery.fields,selectQuery.where);
+    dynamic entities = results.map((e) {
+      final ob = getObject<T>(e);
+      InstanceMirror instanceMirror = Model.reflect(ob);
+      Map data = instanceMirror.invoke('toJson',[]);
+      return {key: data[key]};
+    }).toList();
+    if(entities.length == 0){
+      return {};
+    }
+    Credential credential = DHIS2.credentials;
+    OnlineQuery onlineQuery = queryBuilder.getOnlineQuery();
+    String url = credential.url + '/api/${onlineQuery.endpoint}.json?$strategy';
+    final payload = { onlineQuery.endpoint: entities };
+    Response<dynamic> response = await this.client.post(url, payload);
+    return response.data;
+  }
+
+  void printWrapped(String text) {
+    final pattern = RegExp('.{1,800}'); // 800 is the size of each chunk
+    pattern.allMatches(text).forEach((match) => print(match.group(0)));
+  }
 
   Future<dynamic> uploadFile(String filePath) async {
     Credential credential = DHIS2.credentials;
@@ -277,7 +332,6 @@ class ModelProvider extends ChangeNotifier {
     }).toList();
     //return await dbClient.getAllItems(classMirror.simpleName.toLowerCase());
   }
-}
 
 void removeNullAndEmptyParams(Map<String, Object> mapToEdit) {
 // Remove all null values; they cause validation errors
@@ -523,4 +577,5 @@ T getObject<T>(Map<String, dynamic> objectMap) {
     }
   }
   return classMirror.newInstance('fromJson', [resultMap]);
+}
 }
