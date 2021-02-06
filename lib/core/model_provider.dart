@@ -67,6 +67,7 @@ class ModelProvider extends ChangeNotifier {
     }
     //await Future.wait(orgUnitMaps.map((ouMap)=>save(OrganisationUnit.fromJson(ouMap))));
     notifyListeners();
+    return result;
   }
 
   Future<dynamic> downloadMemory<T>(QueryBuilder queryBuilder) async {
@@ -169,8 +170,8 @@ class ModelProvider extends ChangeNotifier {
         return data;
       }).toList()
     };
-    Response<dynamic> response = await this.client.post(url, payload);
-
+    var dataToSave = payload[onlineQuery.endpoint][0];
+    Response<dynamic> response = await this.client.post(url, dataToSave);
     return response;
   }
 
