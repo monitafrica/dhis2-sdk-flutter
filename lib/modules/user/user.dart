@@ -136,14 +136,15 @@ class User implements ModelInterface {
   getValue(attribute) {
     return this
         .attributeValues
-        .firstWhere((attr) => attr.attribute['attribute'] == attribute)
+        .firstWhere((attr) => attr.attribute == attribute)
         .value;
   }
 }
 
 @Model
 class AttributeValues {
-  Map<String,dynamic> attribute;
+  @PrimaryKey()
+  String attribute;
   String value;
 
   AttributeValues({this.attribute, this.value});
@@ -154,7 +155,7 @@ class AttributeValues {
 
   toJson() {
     return {
-      'attribute': this.attribute,
+      'attribute': {'id': this.attribute},
       'value': this.value
     };
   }
