@@ -4,8 +4,7 @@ import 'package:dhis2sdk/core/model.dart';
 import 'package:dhis2sdk/modules/organisation_unit/organisation_unit.dart';
 
 @Model
-class User implements ModelInterface{
-
+class User implements ModelInterface {
   @PrimaryKey()
   String id;
   String lastUpdated;
@@ -28,6 +27,8 @@ class User implements ModelInterface{
   String nationality;
   String interests;
   @Column()
+  List<AttributeValues> attributeValues;
+  @Column()
   UserCredentials userCredentials;
 
   @Column()
@@ -35,26 +36,27 @@ class User implements ModelInterface{
 
   User(
       {this.lastUpdated,
-        this.id,
-        this.href,
-        this.created,
-        this.name,
-        this.birthday,
-        this.education,
-        this.gender,
-        this.displayName,
-        this.jobTitle,
-        this.surname,
-        this.employer,
-        this.introduction,
-        this.email,
-        this.languages,
-        this.lastCheckedInterpretations,
-        this.firstName,
-        this.phoneNumber,
-        this.nationality,
-        this.interests,
-        this.userCredentials});
+      this.id,
+      this.href,
+      this.created,
+      this.name,
+      this.birthday,
+      this.education,
+      this.gender,
+      this.displayName,
+      this.jobTitle,
+      this.surname,
+      this.employer,
+      this.introduction,
+      this.email,
+      this.languages,
+      this.lastCheckedInterpretations,
+      this.firstName,
+      this.phoneNumber,
+      this.nationality,
+      this.interests,
+      this.attributeValues,
+      this.userCredentials});
 
   User.fromJson(Map<String, dynamic> json) {
     lastUpdated = json['lastUpdated'];
@@ -77,7 +79,12 @@ class User implements ModelInterface{
     phoneNumber = json['phoneNumber'];
     nationality = json['nationality'];
     interests = json['interests'];
-    if(json['userCredentials'].runtimeType == String){
+    if (json['attributeValues'] != null) {
+      attributeValues = new List<AttributeValues>();
+      json['attributeValues'].forEach(
+          (attr) => {attributeValues.add(new AttributeValues.fromJson(attr))});
+    }
+    if (json['userCredentials'].runtimeType == String) {
       json['userCredentials'] = jsonDecode(json['userCredentials']);
     }
     userCredentials = json['userCredentials'] != null
@@ -113,6 +120,9 @@ class User implements ModelInterface{
     data['phoneNumber'] = this.phoneNumber;
     data['nationality'] = this.nationality;
     data['interests'] = this.interests;
+    if (this.attributeValues != null) {
+      data['attributeValues'] = this.attributeValues.map((e) => e.toJson());
+    }
     if (this.userCredentials != null) {
       data['userCredentials'] = this.userCredentials.toJson();
     }
@@ -121,6 +131,32 @@ class User implements ModelInterface{
           this.organisationUnits.map((v) => v.toJson()).toList();
     }
     return data;
+  }
+
+  getValue(attribute) {
+    return this
+        .attributeValues
+        .firstWhere((attr) => attr.attribute['attribute'] == attribute)
+        .value;
+  }
+}
+
+@Model
+class AttributeValues {
+  Map<String,dynamic> attribute;
+  String value;
+
+  AttributeValues({this.attribute, this.value});
+  AttributeValues.fromJson(json) {
+    attribute = json['attribute'];
+    value = json['value'];
+  }
+
+  toJson() {
+    return {
+      'attribute': this.attribute,
+      'value': this.value
+    };
   }
 }
 
@@ -143,23 +179,24 @@ class UserCredentials {
   bool favorite;
   String username;
 
-  UserCredentials(
-      {this.code,
-        this.lastUpdated,
-        this.id,
-        this.created,
-        this.name,
-        this.lastLogin,
-        this.displayName,
-        this.externalAuth,
-        this.externalAccess,
-        this.disabled,
-        this.twoFA,
-        this.passwordLastUpdated,
-        this.invitation,
-        this.selfRegistered,
-        this.favorite,
-        this.username,});
+  UserCredentials({
+    this.code,
+    this.lastUpdated,
+    this.id,
+    this.created,
+    this.name,
+    this.lastLogin,
+    this.displayName,
+    this.externalAuth,
+    this.externalAccess,
+    this.disabled,
+    this.twoFA,
+    this.passwordLastUpdated,
+    this.invitation,
+    this.selfRegistered,
+    this.favorite,
+    this.username,
+  });
 
   UserCredentials.fromJson(Map<String, dynamic> json) {
     code = json['code'];

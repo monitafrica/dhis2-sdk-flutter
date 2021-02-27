@@ -2,6 +2,7 @@ import 'package:dhis2sdk/core/dhis2.dart';
 import 'package:dhis2sdk/core/model_provider.dart';
 import 'package:dhis2sdk/modules/user/credential.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
+import 'dart:convert';
 
 
 class CredentialModel  extends ModelProvider{
@@ -13,9 +14,10 @@ class CredentialModel  extends ModelProvider{
         DHIS2.credentials = credentialList.first;
         List<User> users = await DHIS2.User.getAll<User>();
         return users.first;
+
       }
     }catch(e, s){
-
+      print('error fetching user offline $e');
     } finally {
       finishedInitialize();
     }

@@ -3,7 +3,7 @@ import 'package:dhis2sdk/core/dhis2.dart';
 import 'package:dhis2sdk/core/model_provider.dart';
 import 'package:dhis2sdk/modules/user/user.dart';
 import 'package:dio/dio.dart';
-
+import 'dart:convert';
 import 'credential.dart';
 
 class UserModel extends ModelProvider{
@@ -13,7 +13,7 @@ class UserModel extends ModelProvider{
     Credential credentials = DHIS2.credentials;
 
     try{
-      final String _userFields = 'id,name,displayName,created,lastUpdated,email,firstName,surname,phoneNumber,userGroups[id,name],dataViewOrganisationUnits[id,name,level,parent[id,name]],organisationUnits[id,name,level,parent[id,name]],userCredentials[id,username,disabled,userRoles[id,name,authorities]],attributeValues';
+      final String _userFields = 'id,name,displayName,created,lastUpdated,email,firstName,surname,phoneNumber,userGroups[id,name],dataViewOrganisationUnits[id,name,level,parent[id,name]],organisationUnits[id,name,level,parent[id,name]],userCredentials[id,username,disabled,userRoles[id,name,authorities]],attributeValues[value,attribute[id,shortName]]';
       Response<dynamic> response = await this.client.get(credentials.url + '/api/me.json?fields=$_userFields');
       if (response.statusCode == 200) {
         // If the server did return a 200 OK response,
@@ -32,11 +32,13 @@ class UserModel extends ModelProvider{
         throw Exception('Failed to load User');
       }
     }catch(e,s){
+      print('Error saving $e');
       if(e.message == 'Http status error [401]'){
         throw new Exception('NOT_AUTHENTICATED');
       } else if(e.message == 'Http status error [404]'){
         throw new Exception('The URL ${credentials.url} was not found. Details:${e.message}');
       } else {
+        print('Error saving $e');
         throw new Exception(e.message);
       }
     }finally{

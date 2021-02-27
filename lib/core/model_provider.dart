@@ -531,8 +531,6 @@ Map<String, Map<String, dynamic>> getDBMap<T>(T object,{Type type}) {
         } else if (variableMirror.reflectedType.toString().contains("List<")) {
           resultMap[classMirror.simpleName.toLowerCase()][key] = instanceMirror.invokeGetter(key);
         }else {
-          //print('Not Found:$key $isKeyFound');
-          //print(variableMirror.reflectedType );
         }
       }
     }
@@ -611,8 +609,6 @@ T getObject<T>(Map<String, dynamic> objectMap) {
           }
 
         } else {
-          //print(key + ' not used');
-          //print(variableMirror.reflectedType);
         }
       }
     }
