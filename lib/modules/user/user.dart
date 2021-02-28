@@ -149,8 +149,13 @@ class AttributeValues {
 
   AttributeValues({this.attribute, this.value});
   AttributeValues.fromJson(json) {
-    attribute = json['attribute']['id'];
-    value = json['value'];
+    if (json['attribute'] is Map) {
+      attribute = json['attribute']['id'];
+      value = json['value'];
+    } else {
+      attribute = json['attribute'];
+      value = json['value'];
+    }
   }
 
   toJson() {
