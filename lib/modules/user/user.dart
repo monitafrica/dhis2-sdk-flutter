@@ -149,7 +149,7 @@ class AttributeValues {
 
   AttributeValues({this.attribute, this.value});
   AttributeValues.fromJson(json) {
-    attribute = json['attribute'];
+    attribute = json['attribute']['id'];
     value = json['value'];
   }
 

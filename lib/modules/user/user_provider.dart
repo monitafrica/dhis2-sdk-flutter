@@ -24,6 +24,7 @@ class UserModel extends ModelProvider {
         if (currentUser.attributeValues != null) {
           currentUser.attributeValues.map((e) => AttributeValues.fromJson(e));
         }
+        // print('user ${json.encode(currentUser.attributeValues)}');
         await this.save<User>(currentUser);
         await this.save<Credential>(credentials);
         return currentUser;
